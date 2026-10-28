@@ -1,0 +1,26 @@
+# Render Blueprint — deploys the backend API as a free Node web service.
+# In Render: New -> Blueprint -> pick this repo -> it reads this file automatically.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: clean-and-care-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run seed
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false # set this yourself in the Render dashboard after first deploy
+      - key: CLIENT_ORIGIN
+        sync: false # set to your GitHub Pages origin, e.g. https://rbhambhu01.github.io
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1

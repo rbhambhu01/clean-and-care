@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+*.log
+
+# backend
+backend/data/db.json
+
+# frontend build output
+frontend/dist/
+
+.DS_Store
