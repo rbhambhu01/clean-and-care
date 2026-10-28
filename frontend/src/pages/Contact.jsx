@@ -2,6 +2,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
 import { api } from "../api.js";
 import { useCompany } from "../context/CompanyContext.jsx";
+import { sendContactViaWhatsApp, sendPickupViaWhatsApp } from "../lib/whatsapp.js";
 
 function Field({ label, children }) {
   return (
@@ -24,28 +25,22 @@ export default function Contact() {
   const [pickupForm, setPickupForm] = useState({ name: "", phone: "", address: "", service: "", preferredDate: "" });
   const [pickupStatus, setPickupStatus] = useState(null);
 
-  async function submitContact(e) {
+  function submitContact(e) {
     e.preventDefault();
-    setContactStatus({ loading: true });
-    try {
-      const res = await api.sendContact(contactForm);
-      setContactStatus({ success: res.message });
-      setContactForm({ name: "", phone: "", email: "", message: "" });
-    } catch (err) {
-      setContactStatus({ error: err.message });
-    }
+    sendContactViaWhatsApp(contactForm);
+    setContactStatus({ success: "Opening WhatsApp — just hit send there to reach us." });
+    // Also save to the backend in the background for the admin dashboard record.
+    // Not awaited and errors are ignored: WhatsApp is the reliable channel now.
+    api.sendContact(contactForm).catch(() => {});
+    setContactForm({ name: "", phone: "", email: "", message: "" });
   }
 
-  async function submitPickup(e) {
+  function submitPickup(e) {
     e.preventDefault();
-    setPickupStatus({ loading: true });
-    try {
-      const res = await api.schedulePickup(pickupForm);
-      setPickupStatus({ success: res.message });
-      setPickupForm({ name: "", phone: "", address: "", service: "", preferredDate: "" });
-    } catch (err) {
-      setPickupStatus({ error: err.message });
-    }
+    sendPickupViaWhatsApp(pickupForm);
+    setPickupStatus({ success: "Opening WhatsApp — just hit send there to confirm your pickup." });
+    api.schedulePickup(pickupForm).catch(() => {});
+    setPickupForm({ name: "", phone: "", address: "", service: "", preferredDate: "" });
   }
 
   return (
@@ -111,11 +106,10 @@ export default function Contact() {
               onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
             />
           </Field>
-          <button type="submit" className="btn-pill-lime w-full justify-center" disabled={contactStatus?.loading}>
-            {contactStatus?.loading ? "Sending..." : "Send Message"}
+          <button type="submit" className="btn-pill-lime w-full justify-center">
+            Send Message
           </button>
           {contactStatus?.success && <p className="text-sm text-lime-dark">{contactStatus.success}</p>}
-          {contactStatus?.error && <p className="text-sm text-red-600">{contactStatus.error}</p>}
         </form>
 
         <form onSubmit={submitPickup} className="space-y-4 rounded-2xl bg-ink p-6 text-white lg:col-span-1">
@@ -160,11 +154,10 @@ export default function Contact() {
               onChange={(e) => setPickupForm({ ...pickupForm, preferredDate: e.target.value })}
             />
           </Field>
-          <button type="submit" className="btn-pill-lime w-full justify-center" disabled={pickupStatus?.loading}>
-            {pickupStatus?.loading ? "Scheduling..." : "Schedule Pickup"}
+          <button type="submit" className="btn-pill-lime w-full justify-center">
+            Schedule Pickup
           </button>
           {pickupStatus?.success && <p className="text-sm text-lime">{pickupStatus.success}</p>}
-          {pickupStatus?.error && <p className="text-sm text-red-400">{pickupStatus.error}</p>}
         </form>
       </section>
     </div>
