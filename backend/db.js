@@ -1,9 +1,16 @@
+import { mkdirSync } from "fs";
 import { JSONFilePreset } from "lowdb/node";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbFile = path.join(__dirname, "data", "db.json");
+const dataDir = path.join(__dirname, "data");
+const dbFile = path.join(dataDir, "db.json");
+
+// git doesn't track empty directories, so on a fresh clone (e.g. Render's
+// build) "data/" may not exist yet — lowdb errors (ENOENT) trying to write
+// into a missing directory, so ensure it's there first.
+mkdirSync(dataDir, { recursive: true });
 
 const defaultData = {
   company: {},
