@@ -20,7 +20,9 @@ services:
         sync: false # set this yourself in the Render dashboard after first deploy
       - key: CLIENT_ORIGIN
         sync: false # set to your GitHub Pages origin, e.g. https://rbhambhu01.github.io
-    disk:
-      name: data
-      mountPath: /opt/render/project/src/backend/data
-      sizeGB: 1
+    # NOTE: Render's free tier doesn't support persistent disks, so this service
+    # has no disk mount. backend/data/db.json therefore resets to the seeded
+    # content on every deploy (and possibly other restarts) — fine for
+    # services/pricing/testimonials (reseeded each time anyway), but contact
+    # form and pickup-request submissions will NOT reliably persist. See
+    # DEPLOYMENT.md for options if you need real lead persistence.

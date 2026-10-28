@@ -22,7 +22,15 @@ Render was chosen because it has a genuinely free tier for small Node apps and r
 
 **Note on the free tier**: Render's free web services spin down after 15 minutes of inactivity and take ~30–60 seconds to wake back up on the next request. The first pricing/contact-form load after idle time will feel slow — that's Render waking up, not a bug. If that's not acceptable, Render's cheapest paid tier removes the sleep behavior.
 
-**Note on the database**: this project uses a JSON file as its database (`backend/data/db.json`), which only persists on Render because `render.yaml` mounts a small persistent disk at that path. Without that disk, every redeploy would wipe submitted contact/pickup leads.
+**Note on the database — read this before you rely on the admin dashboard**: this project uses a JSON file as its database (`backend/data/db.json`). Render's **free** tier doesn't support persistent disks at all (the Blueprint fails if you try), so on the free plan the filesystem is ephemeral: every deploy runs `npm run seed` fresh and wipes anything written since. Services, pricing, and testimonials are unaffected — they come from the seed script every time anyway. But **contact form submissions and pickup requests will not reliably survive** — a customer could submit the form, and that lead could vanish on the next deploy or container restart, with no error shown to you or them.
+
+If you expect real customers to use the contact/pickup forms, pick one before going live:
+- **Accept it for now.** Fine if you're just testing or don't expect submissions yet; upgrade later.
+- **Upgrade the Render service to a paid plan** (smallest paid tier) and add a disk back — then leads persist normally. Costs money but is a one-line config change back to what `render.yaml` had before.
+- **Have the forms email you instead of / as well as storing locally** — e.g. wire `backend/routes/contact.js` to send via a transactional email API (Resend, SendGrid, etc.) on each submission, so you get the lead even if storage resets. I can build this if you want it — it's the more robust fix and still free.
+- **Move to a real external database** (e.g. a free-tier hosted Postgres/SQLite service) instead of the local JSON file — bigger change, most "proper" long-term fix.
+
+Tell me which you'd rather do and I'll implement it; I didn't want to just pick one for you since it trades off cost vs. effort vs. reliability.
 
 ## Connect the frontend to it
 
