@@ -27,13 +27,13 @@ const company = {
   offer: "Flat 10% Off on your first order",
   ctaHeading: "Experience Our Superior Services Today!",
   address: {
-    line1: "Shop No. 20-G.F. Chanakya Plaza, Nr. Sakar School, New C.G. Road,",
-    line2: "Chandkheda, Ahmedabad - 382424",
+    line1: "Shop No. GF-2, Dev Priya Complex, Motera Stadium Road,",
+    line2: "Motera, Ahmedabad - 380005",
     city: "Ahmedabad",
     state: "Gujarat",
     country: "India",
   },
-  phones: ["+91-79832-56845", "+91-96952-32061"],
+  phones: ["+91-81606-77875"],
   email: "support@cleanandcare.example",
   social: {
     youtube: "#",
