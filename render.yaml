@@ -20,6 +20,15 @@ services:
         sync: false # set this yourself in the Render dashboard after first deploy
       - key: CLIENT_ORIGIN
         sync: false # set to your GitHub Pages origin, e.g. https://rbhambhu01.github.io
+      # Offer-banner image uploads go to Cloudinary (free tier), not our own
+      # ephemeral filesystem — see DEPLOYMENT.md "Offer banner image" section
+      # for how to get these three values.
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
     # NOTE: Render's free tier doesn't support persistent disks, so this service
     # has no disk mount. backend/data/db.json therefore resets to the seeded
     # content on every deploy (and possibly other restarts) — fine for

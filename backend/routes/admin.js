@@ -1,9 +1,67 @@
 import { Router } from "express";
+import multer from "multer";
 import { db, nextId } from "../db.js";
+import cloudinary, { OFFER_IMAGE_PUBLIC_ID, offerImageConfigured } from "../lib/cloudinary.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 router.use(requireAuth);
+
+// Memory storage only — never touches disk, so this works fine even on
+// Render's ephemeral filesystem (free tier has no persistent disk).
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+// ---- Offer banner image (stored in Cloudinary, not our own database) ----
+router.post("/offer-image", upload.single("image"), (req, res) => {
+  if (!offerImageConfigured()) {
+    return res.status(503).json({
+      error: "Image hosting isn't configured yet. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.",
+    });
+  }
+  if (!req.file) {
+    return res.status(400).json({ error: "No image file uploaded" });
+  }
+
+  const stream = cloudinary.uploader.upload_stream(
+    {
+      public_id: OFFER_IMAGE_PUBLIC_ID,
+      overwrite: true,
+      invalidate: true,
+      format: "jpg", // normalize so the delivery URL is always predictable
+      transformation: [{ quality: "auto", fetch_format: "auto" }],
+    },
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(502).json({ error: "Upload to image host failed" });
+      }
+      res.json({ url: result.secure_url });
+    }
+  );
+  stream.end(req.file.buffer);
+});
+
+router.delete("/offer-image", async (req, res) => {
+  if (!offerImageConfigured()) {
+    return res.status(503).json({ error: "Image hosting isn't configured" });
+  }
+  try {
+    await cloudinary.uploader.destroy(OFFER_IMAGE_PUBLIC_ID);
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(502).json({ error: "Failed to remove image" });
+  }
+});
 
 // ---- Leads (contact messages & pickup requests) ----
 router.get("/leads/contact", (req, res) => {

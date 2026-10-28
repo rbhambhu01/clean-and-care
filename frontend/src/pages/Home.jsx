@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import HeroIllustration from "../components/HeroIllustration.jsx";
+import OfferBanner from "../components/OfferBanner.jsx";
 import SectionHeading from "../components/SectionHeading.jsx";
 import ServiceCard from "../components/ServiceCard.jsx";
 import StarRating from "../components/StarRating.jsx";
@@ -50,6 +51,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <OfferBanner />
 
       {/* Why we are */}
       <section className="py-16">

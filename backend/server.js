@@ -1,6 +1,7 @@
 import cors from "cors";
 import "dotenv/config";
 import express from "express";
+import { MulterError } from "multer";
 import morgan from "morgan";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
@@ -44,6 +45,13 @@ app.use((req, res) => {
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  if (err instanceof MulterError) {
+    const message = err.code === "LIMIT_FILE_SIZE" ? "Image must be under 5MB" : err.message;
+    return res.status(400).json({ error: message });
+  }
+  if (err.message === "Only image files are allowed") {
+    return res.status(400).json({ error: err.message });
+  }
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
 });

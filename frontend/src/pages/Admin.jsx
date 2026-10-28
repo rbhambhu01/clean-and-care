@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { offerImageUrl } from "../lib/offerImage.js";
 
 const TOKEN_KEY = "cc_admin_token";
 
@@ -9,6 +10,11 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [contacts, setContacts] = useState([]);
   const [pickups, setPickups] = useState([]);
+
+  const [offerFile, setOfferFile] = useState(null);
+  const [offerStatus, setOfferStatus] = useState(null);
+  const [offerImageFailed, setOfferImageFailed] = useState(false);
+  const [offerVersion, setOfferVersion] = useState(0);
 
   async function login(e) {
     e.preventDefault();
@@ -25,6 +31,48 @@ export default function Admin() {
   function logout() {
     localStorage.removeItem(TOKEN_KEY);
     setToken("");
+  }
+
+  async function uploadOffer(e) {
+    e.preventDefault();
+    if (!offerFile) return;
+    setOfferStatus({ loading: true });
+    try {
+      const body = new FormData();
+      body.append("image", offerFile);
+      const res = await fetch("/api/admin/offer-image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setOfferStatus({ success: "Offer image updated — it's now live on the homepage." });
+      setOfferFile(null);
+      setOfferImageFailed(false);
+      setOfferVersion((v) => v + 1);
+    } catch (err) {
+      setOfferStatus({ error: err.message });
+    }
+  }
+
+  async function removeOffer() {
+    setOfferStatus({ loading: true });
+    try {
+      const res = await fetch("/api/admin/offer-image", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok && res.status !== 204) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Remove failed");
+      }
+      setOfferStatus({ success: "Offer image removed from the homepage." });
+      setOfferImageFailed(true);
+      setOfferVersion((v) => v + 1);
+    } catch (err) {
+      setOfferStatus({ error: err.message });
+    }
   }
 
   useEffect(() => {
@@ -65,6 +113,55 @@ export default function Admin() {
         <h1 className="font-serif text-2xl font-semibold text-ink sm:text-3xl">Admin Dashboard</h1>
         <button onClick={logout} className="btn-pill-outline !py-2 !text-xs">Log Out</button>
       </div>
+
+      <section className="mb-12">
+        <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Offer Banner</h2>
+        <p className="mb-4 text-sm text-ink/60">
+          Upload an image to show as a promotional banner on the homepage, right below the hero section.
+        </p>
+        <div className="flex flex-col gap-6 rounded-2xl border border-ink/10 p-6 sm:flex-row sm:items-start">
+          <div className="flex h-40 w-full flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-cream sm:w-64">
+            {offerImageUrl && !offerImageFailed ? (
+              <img
+                key={offerVersion}
+                src={`${offerImageUrl}?v=${offerVersion}`}
+                alt="Current offer"
+                className="h-full w-full object-cover"
+                onError={() => setOfferImageFailed(true)}
+                onLoad={() => setOfferImageFailed(false)}
+              />
+            ) : (
+              <p className="px-4 text-center text-xs text-ink/40">
+                {offerImageUrl ? "No offer image set" : "Image hosting not configured (VITE_CLOUDINARY_CLOUD_NAME missing)"}
+              </p>
+            )}
+          </div>
+
+          <form onSubmit={uploadOffer} className="flex-1 space-y-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setOfferFile(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-ink/70 file:mr-4 file:rounded-pill file:border-0 file:bg-cream file:px-4 file:py-2 file:text-sm file:font-semibold file:text-ink hover:file:bg-lime/30"
+            />
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" className="btn-pill-lime !py-2 !text-xs" disabled={!offerFile}>
+                Upload
+              </button>
+              <button
+                type="button"
+                onClick={removeOffer}
+                className="btn-pill-outline !py-2 !text-xs"
+                disabled={!offerImageUrl || offerImageFailed}
+              >
+                Remove Current Offer
+              </button>
+            </div>
+            {offerStatus?.success && <p className="text-sm text-lime-dark">{offerStatus.success}</p>}
+            {offerStatus?.error && <p className="text-sm text-red-600">{offerStatus.error}</p>}
+          </form>
+        </div>
+      </section>
 
       <section className="mb-12">
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Pickup Requests</h2>
