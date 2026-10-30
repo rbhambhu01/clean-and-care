@@ -9,7 +9,38 @@ function PriceTable({ title, items }) {
   return (
     <div className="mb-12">
       <h3 className="mb-4 font-serif text-2xl font-semibold text-ink">{title}</h3>
-      <div className="overflow-x-auto rounded-2xl border border-ink/10">
+
+      {/* Mobile: stacked cards — no horizontal scrolling needed */}
+      <div className="space-y-3 sm:hidden">
+        {items.map((row) => (
+          <div key={row.item} className="rounded-xl border border-ink/10 p-4">
+            <p className="font-medium text-ink">{row.item}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {row.dc != null && (
+                <button
+                  onClick={() => addItem({ item: row.item, service: "dc", price: row.dc })}
+                  className="flex items-center gap-1.5 rounded-pill border border-ink/15 px-3 py-1.5 text-xs hover:bg-lime/20"
+                >
+                  Dry Clean &#8377;{row.dc}
+                  <Plus className="h-3 w-3" />
+                </button>
+              )}
+              {row.si != null && (
+                <button
+                  onClick={() => addItem({ item: row.item, service: "si", price: row.si })}
+                  className="flex items-center gap-1.5 rounded-pill border border-ink/15 px-3 py-1.5 text-xs hover:bg-lime/20"
+                >
+                  Steam Iron &#8377;{row.si}
+                  <Plus className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tablet/desktop: full table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="bg-cream">
             <tr>
@@ -62,7 +93,36 @@ function SimpleTable({ title, rows, labelKey, valueKey }) {
   return (
     <div className="mb-12">
       <h3 className="mb-4 font-serif text-2xl font-semibold text-ink">{title}</h3>
-      <div className="overflow-x-auto rounded-2xl border border-ink/10">
+
+      {/* Mobile: stacked cards */}
+      <div className="space-y-3 sm:hidden">
+        {rows.map((row) => {
+          const priceValue = Number.parseInt(row[valueKey], 10);
+          const canAdd = !Number.isNaN(priceValue);
+          return (
+            <div
+              key={row[labelKey]}
+              className="flex items-center justify-between gap-3 rounded-xl border border-ink/10 p-4"
+            >
+              <div>
+                <p className="font-medium text-ink">{row[labelKey]}</p>
+                <p className="text-xs text-ink/60">&#8377;{row[valueKey]}</p>
+              </div>
+              {canAdd && (
+                <button
+                  onClick={() => addItem({ item: row[labelKey], service: "dc", price: priceValue })}
+                  className="flex flex-shrink-0 items-center gap-1 rounded-pill border border-ink/15 px-3 py-1.5 text-xs hover:bg-lime/20"
+                >
+                  <Plus className="h-3 w-3" /> Add
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Tablet/desktop: table */}
+      <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
         <table className="w-full min-w-[360px] text-left text-sm">
           <tbody>
             {rows.map((row, i) => {

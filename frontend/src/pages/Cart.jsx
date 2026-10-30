@@ -54,34 +54,34 @@ export default function Cart() {
             {items.map((l) => (
               <div
                 key={l.key}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-ink/10 p-4"
+                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-ink/10 p-4"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-ink">{l.item}</p>
                   <p className="text-xs uppercase tracking-wide text-ink/50">
                     {l.service === "dc" ? "Dry Clean" : "Steam Iron"} &middot; ₹{l.price} each
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-shrink-0 items-center gap-3">
                   <button
                     onClick={() => updateQty(l.key, l.qty - 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/15 hover:bg-cream"
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-ink/15 hover:bg-cream"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
-                  <span className="w-6 text-center text-sm">{l.qty}</span>
+                  <span className="w-6 flex-shrink-0 text-center text-sm">{l.qty}</span>
                   <button
                     onClick={() => updateQty(l.key, l.qty + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/15 hover:bg-cream"
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-ink/15 hover:bg-cream"
                     aria-label="Increase quantity"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
-                  <p className="w-16 text-right text-sm font-medium">₹{l.price * l.qty}</p>
+                  <p className="w-16 flex-shrink-0 text-right text-sm font-medium">₹{l.price * l.qty}</p>
                   <button
                     onClick={() => removeItem(l.key)}
-                    className="text-ink/40 hover:text-red-600"
+                    className="flex-shrink-0 text-ink/40 hover:text-red-600"
                     aria-label="Remove item"
                   >
                     <Trash2 className="h-4 w-4" />
