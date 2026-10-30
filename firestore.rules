@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// There is exactly one admin (the business owner's Firebase Auth account),
+// so "signed in at all" is sufficient to mean "is the admin" — no roles needed.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // Catalog content: anyone can read, only the admin can write.
+    match /company/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /services/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /pricingCategories/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /pricingExtras/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /testimonials/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /blog/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    // Offer banner visibility toggle. The image itself lives in Cloudinary
+    // (deterministic fixed-URL upload, unsigned preset — see lib/cloudinary
+    // in the frontend); Cloudinary's actual delete API needs a secret we
+    // don't have client-side, so "remove" just flips this flag instead of
+    // truly deleting the asset.
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Leads (contact messages, pickup requests, cart orders): anyone can
+    // submit one, but only the admin can read/manage the inbox. This is the
+    // key property a pure "cart calculator" site doesn't need — submissions
+    // must be write-only to the public, never readable by other visitors.
+    match /leads/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

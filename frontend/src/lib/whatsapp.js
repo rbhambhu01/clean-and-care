@@ -19,6 +19,21 @@ export function sendContactViaWhatsApp({ name, phone, email, message }) {
   openWhatsApp(lines.join("\n"));
 }
 
+export function sendCartOrderViaWhatsApp({ name, phone, address, items, total }) {
+  const lines = [
+    "New order from website cart:",
+    `Name: ${name}`,
+    `Phone: ${phone}`,
+    `Address: ${address}`,
+    "",
+    "Items:",
+    ...items.map((l) => `- ${l.item} (${l.service.toUpperCase()}) x${l.qty} = ₹${l.price * l.qty}`),
+    "",
+    `Total: ₹${total}`,
+  ];
+  openWhatsApp(lines.join("\n"));
+}
+
 export function sendPickupViaWhatsApp({ name, phone, address, service, preferredDate }) {
   const lines = [
     "New pickup request from website:",

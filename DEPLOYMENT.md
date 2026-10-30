@@ -4,73 +4,80 @@
 
 - **Frontend**: ✅ Live at **https://rbhambhu01.github.io/clean-and-care/**
   Deploys automatically via GitHub Actions (`.github/workflows/deploy.yml`) on every push to `main` that touches `frontend/`.
-- **Backend**: ⬜ Not deployed yet. This is the one step I can't do for you — it requires your own account on a hosting provider, which I can't create on your behalf.
+- **Backend**: Firebase (Firestore + Authentication), free Spark plan. ✅ Live — no separate server to deploy or keep running.
+- **Offer banner image upload**: Cloudinary, free tier. ⬜ Needs one quick setup step below before it's active (everything else works without it).
 
-Right now the live site loads, but the pricing table, services, testimonials, and the contact/pickup forms are empty/non-functional because there's no backend for the frontend to call. The steps below connect them.
+The site is now fully static (GitHub Pages) + direct-from-browser calls to Firebase and Cloudinary — there's no Express/Node server in the request path for the live site anymore. The `backend/` folder and `render.yaml` are kept in the repo for reference but are no longer part of the deployed architecture; see "What changed" below if you're wondering why.
 
-## Deploy the backend to Render (free tier)
+## What changed (and why)
 
-Render was chosen because it has a genuinely free tier for small Node apps and reads deployment config straight from the repo.
+This started as GitHub Pages (frontend) + a custom Express API on Render. That had two real problems for a small business site on a free budget:
+1. Render's free tier has no persistent disk, so the database reset on every deploy — contact-form and pickup leads could silently vanish.
+2. It needed a server running at all, with the usual free-tier cold-start delay.
 
-1. Go to https://dashboard.render.com, sign in (or create an account) with GitHub.
-2. Click **New** → **Blueprint**, and pick the `clean-and-care` repo. Render will detect `render.yaml` at the repo root and propose one service: `clean-and-care-api`.
-3. Before deploying, it'll ask you to fill in two values it marked `sync: false`:
-   - `ADMIN_PASSWORD` — pick a real password (not the placeholder in `.env.example`).
-   - `CLIENT_ORIGIN` — set to `https://rbhambhu01.github.io` (no trailing slash, no path — just the origin).
-4. Click **Apply**. Render will build and start the service. First build takes a few minutes.
-5. Once live, copy the service's URL — it'll look like `https://clean-and-care-api.onrender.com`.
+Firebase's free tier solves both: Firestore (database) and Authentication (admin login) are called directly from the browser with no server of our own, and the data persists properly — no ephemeral filesystem involved. Cloudinary's free tier still handles the offer-banner image (same as before), just via an unsigned upload preset now instead of going through a backend to keep the API secret hidden — Firebase doesn't have Render's billing requirement for things like this, so this piece got simpler.
 
-**Note on the free tier**: Render's free web services spin down after 15 minutes of inactivity and take ~30–60 seconds to wake back up on the next request. The first pricing/contact-form load after idle time will feel slow — that's Render waking up, not a bug. If that's not acceptable, Render's cheapest paid tier removes the sleep behavior.
+**Security model**: without a server, authorization lives entirely in Firestore Security Rules (`firestore.rules`) rather than in server-side code. Public content (services, pricing, testimonials, blog) is read-only to everyone; the `leads` collection (contact/pickup/cart submissions) is write-only to the public and read-only to the authenticated admin — so a visitor can submit a lead but can never read anyone else's.
 
-**Note on the database — read this before you rely on the admin dashboard**: this project uses a JSON file as its database (`backend/data/db.json`). Render's **free** tier doesn't support persistent disks at all (the Blueprint fails if you try), so on the free plan the filesystem is ephemeral: every deploy runs `npm run seed` fresh and wipes anything written since. Services, pricing, and testimonials are unaffected — they come from the seed script every time anyway. But **contact form submissions and pickup requests will not reliably survive** — a customer could submit the form, and that lead could vanish on the next deploy or container restart, with no error shown to you or them.
+## Firebase project
 
-If you expect real customers to use the contact/pickup forms, pick one before going live:
-- **Accept it for now.** Fine if you're just testing or don't expect submissions yet; upgrade later.
-- **Upgrade the Render service to a paid plan** (smallest paid tier) and add a disk back — then leads persist normally. Costs money but is a one-line config change back to what `render.yaml` had before.
-- **Have the forms email you instead of / as well as storing locally** — e.g. wire `backend/routes/contact.js` to send via a transactional email API (Resend, SendGrid, etc.) on each submission, so you get the lead even if storage resets. I can build this if you want it — it's the more robust fix and still free.
-- **Move to a real external database** (e.g. a free-tier hosted Postgres/SQLite service) instead of the local JSON file — bigger change, most "proper" long-term fix.
+Project ID: `clean-and-care-laundry`. Console: https://console.firebase.google.com/project/clean-and-care-laundry/overview
 
-Tell me which you'd rather do and I'll implement it; I didn't want to just pick one for you since it trades off cost vs. effort vs. reliability.
+Already set up and live:
+- Firestore database (`nam5` region), seeded with the site's real content via `scripts/seed-firestore.mjs`.
+- Firestore Security Rules (`firestore.rules`) and the composite index it needs (`firestore.indexes.json`), both deployed.
+- Authentication, Email/Password provider enabled, one admin user created (`rbhambhu01@gmail.com`).
 
-## Connect the frontend to it
+If you ever need to redeploy rules or indexes after editing them locally:
+```bash
+firebase deploy --only firestore:rules,firestore:indexes --project clean-and-care-laundry
+```
 
-1. In the GitHub repo: **Settings → Secrets and variables → Actions → Variables** tab → **New repository variable**.
-2. Name: `VITE_API_URL`. Value: your Render URL + `/api`, e.g. `https://clean-and-care-api.onrender.com/api`.
-3. Re-run the deploy workflow so the frontend rebuilds with that value baked in: **Actions** tab → **Deploy frontend to GitHub Pages** → **Run workflow** (or just push any small change to `frontend/`).
+### Re-seeding content
 
-After that finishes, reload https://rbhambhu01.github.io/clean-and-care/ — pricing, services, testimonials, and the contact/pickup forms should all work against the live backend.
+If you edit the pricing/services/testimonials/company data in `scripts/seed-firestore.mjs` and want to push it to Firestore again:
+```bash
+cd scripts
+npm install   # first time only
+node seed-firestore.mjs
+```
+Needs `scripts/.env` with the Firebase config and `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` (see `scripts/.env.example`) — that file is gitignored since it holds a real password.
 
-## Offer banner image (admin upload)
+## Offer banner image (Cloudinary — one remaining setup step)
 
-The admin dashboard (`/admin`) has an "Offer Banner" section where you can upload a promotional image that appears on the homepage, right below the hero section. Uploads go to Cloudinary's free tier rather than our own server storage, specifically so the image survives Render's redeploys (unlike contact/pickup leads — see above).
+The admin dashboard's "Offer Banner" upload won't work until this is done; everything else on the site works without it.
 
-**One-time setup:**
+1. Create a free account at https://cloudinary.com/users/register/free (I can't do this step — new third-party account).
+2. In the Cloudinary console: **Settings → Upload → Upload presets → Add upload preset**.
+   - Set **Signing Mode** to **Unsigned**.
+   - Set **Folder** to `clean-care` (optional but tidy).
+   - Save, and note the preset's name.
+3. Note your **Cloud name** too — shown at the top of the Cloudinary dashboard.
+4. On GitHub: **Settings → Secrets and variables → Actions → Variables**, add two repository variables:
+   - `VITE_CLOUDINARY_CLOUD_NAME` — your cloud name.
+   - `VITE_CLOUDINARY_UPLOAD_PRESET` — the preset name from step 2.
+5. Re-run the **Deploy frontend to GitHub Pages** workflow (**Actions** tab → select it → **Run workflow**), or push any change under `frontend/`.
 
-1. Create a free account at https://cloudinary.com/users/register/free (I can't do this step — it's a new third-party account). The free tier (25GB storage/bandwidth) is far more than this needs.
-2. After signing up, your **Dashboard** page shows three values right at the top: **Cloud name**, **API Key**, **API Secret**. You'll need all three.
-3. **On Render**: go to your `clean-and-care-api` service → **Environment** tab → add:
-   - `CLOUDINARY_CLOUD_NAME`
-   - `CLOUDINARY_API_KEY`
-   - `CLOUDINARY_API_SECRET`
-   Render redeploys automatically when you save new env vars.
-4. **On GitHub**: same place as `VITE_API_URL` earlier (**Settings → Secrets and variables → Actions → Variables**) → add a new repository variable:
-   - Name: `VITE_CLOUDINARY_CLOUD_NAME`
-   - Value: just the cloud name from step 2 (this one isn't secret — it's part of the public image URL, so it's safe as a plain variable, not a secret).
-5. Re-run the **Deploy frontend to GitHub Pages** workflow (same as before) so the frontend picks it up.
+**Note on this approach**: since there's no backend to keep Cloudinary's API secret hidden, image upload uses an *unsigned* preset instead — gated by the preset's own restrictions (image-only, folder-scoped) rather than real server-side authorization. In practice this is fine for a single promotional banner image: the upload UI itself is behind Firebase Auth login, so a random visitor won't find the preset name easily, and worst case if someone did abuse it, it only affects that one banner image, which you can just re-upload. If you'd rather have this fully locked down, that needs a server-side signing step (e.g. a Firebase Cloud Function) — which in turn needs Firebase's paid Blaze plan, the thing we specifically avoided. Worth it only if this ever feels like a real risk for your site.
 
-After that, go to `/admin`, log in, and the "Offer Banner" section will let you upload/replace/remove the image — it shows up on the homepage within seconds (Cloudinary invalidates its CDN cache on each upload).
+## Local development
 
-**Until you do this setup**: the admin dashboard will show "Image hosting not configured" instead of erroring, and the homepage just won't show an offer banner at all — nothing breaks, it's just inactive.
-
-## Local development (unchanged)
-
-Local dev still works exactly as before — see the root `README.md`. The Vite dev server proxies `/api` to `http://localhost:4000`, so none of the above affects local work.
+```bash
+cd frontend
+cp .env.example .env.local   # fill in the same Firebase + Cloudinary values as the GitHub variables above
+npm install
+npm run dev
+```
+No backend process to start separately anymore — the dev server talks straight to Firebase/Cloudinary, same as production.
 
 ## Custom domain (optional)
 
 If you want this on `thecleanncare.in` (or a new domain) instead of the `github.io` subpath:
 - GitHub Pages supports custom domains for free (**Settings → Pages → Custom domain**), but you'd also need to update `vite.config.js`'s `base` back to `"/"` and drop the `basename` logic in `main.jsx`, since a custom domain serves from the root, not `/clean-and-care/`.
 - You'd point the domain's DNS at GitHub Pages per [GitHub's custom domain docs](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site).
-- Update `CLIENT_ORIGIN` on Render to the new domain once that's live.
 
 Ask if you want me to make that switch — it's a few small config changes, not a rebuild.
+
+## The old backend/Render setup (deprecated)
+
+`backend/` and `render.yaml` still exist in the repo but are no longer deployed or required. If you want them fully removed rather than just unused, say so and I'll clean them up — I left them in place for now rather than deleting working code you might still want as reference.

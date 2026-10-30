@@ -1,27 +1,70 @@
-// In production (GitHub Pages) there's no dev proxy, so point straight at the
-// deployed backend via VITE_API_URL (set as a build-time env var / GH Actions secret).
-// Locally, the relative "/api" path goes through the Vite dev server proxy.
-const BASE = import.meta.env.VITE_API_URL || "/api";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "./lib/firebase.js";
 
-async function request(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.error || "Something went wrong");
-  }
-  return data;
+async function getOrdered(collectionName) {
+  const q = query(collection(db, collectionName), orderBy("order"));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 export const api = {
-  getCompany: () => request("/company"),
-  getServices: () => request("/services"),
-  getPricing: () => request("/pricing"),
-  getTestimonials: () => request("/testimonials"),
-  getBlog: () => request("/blog"),
-  sendContact: (payload) => request("/contact", { method: "POST", body: JSON.stringify(payload) }),
-  schedulePickup: (payload) => request("/schedule-pickup", { method: "POST", body: JSON.stringify(payload) }),
-  adminLogin: (payload) => request("/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+  async getCompany() {
+    const snap = await getDoc(doc(db, "company", "main"));
+    return snap.exists() ? snap.data() : null;
+  },
+
+  getServices: () => getOrdered("services"),
+
+  async getPricing() {
+    const [categories, extrasSnap] = await Promise.all([
+      getOrdered("pricingCategories"),
+      getDoc(doc(db, "pricingExtras", "main")),
+    ]);
+    return {
+      categories,
+      extras: extrasSnap.exists() ? extrasSnap.data() : {},
+    };
+  },
+
+  getTestimonials: () => getOrdered("testimonials"),
+  getBlog: () => getOrdered("blog"),
+
+  async sendContact(payload) {
+    await addDoc(collection(db, "leads"), {
+      type: "contact",
+      ...payload,
+      status: "new",
+      createdAt: serverTimestamp(),
+    });
+    return { message: "Thanks! We'll get back to you shortly." };
+  },
+
+  async schedulePickup(payload) {
+    await addDoc(collection(db, "leads"), {
+      type: "pickup",
+      ...payload,
+      status: "pending",
+      createdAt: serverTimestamp(),
+    });
+    return { message: "Pickup scheduled! Our team will confirm shortly." };
+  },
+
+  async submitCartOrder(payload) {
+    await addDoc(collection(db, "leads"), {
+      type: "cart",
+      ...payload,
+      status: "pending",
+      createdAt: serverTimestamp(),
+    });
+    return { message: "Order received! Confirm it on WhatsApp to finish." };
+  },
 };

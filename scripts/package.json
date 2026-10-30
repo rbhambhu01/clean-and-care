@@ -1,0 +1,10 @@
+{
+  "name": "clean-and-care-scripts",
+  "private": true,
+  "type": "module",
+  "description": "One-off maintenance scripts (not part of the deployed app)",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase": "^11.0.0"
+  }
+}

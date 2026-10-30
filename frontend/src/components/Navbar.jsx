@@ -1,6 +1,7 @@
-import { Menu, X } from "lucide-react";
+import { Menu, ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useCart } from "../context/CartContext.jsx";
 import { img } from "../lib/assets.js";
 
 const LINKS = [
@@ -13,6 +14,7 @@ const LINKS = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { count } = useCart();
 
   return (
     <header className="sticky top-0 z-50 bg-ink text-white">
@@ -37,9 +39,19 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <NavLink to="/contact" className="btn-pill-lime hidden lg:inline-flex">
-          Schedule Pickup
-        </NavLink>
+        <div className="hidden items-center gap-4 lg:flex">
+          <NavLink to="/cart" className="relative text-white/85 hover:text-lime" aria-label="Cart">
+            <ShoppingCart className="h-6 w-6" />
+            {count > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-lime text-[10px] font-bold text-ink">
+                {count}
+              </span>
+            )}
+          </NavLink>
+          <NavLink to="/contact" className="btn-pill-lime">
+            Schedule Pickup
+          </NavLink>
+        </div>
 
         <button
           className="text-white lg:hidden"
@@ -67,6 +79,17 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
+            <NavLink
+              to="/cart"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `rounded-md px-2 py-2.5 text-sm font-medium uppercase tracking-wide ${
+                  isActive ? "bg-white/5 text-lime" : "text-white/85"
+                }`
+              }
+            >
+              Cart{count > 0 ? ` (${count})` : ""}
+            </NavLink>
             <NavLink to="/contact" className="btn-pill-lime mt-2 justify-center">
               Schedule Pickup
             </NavLink>
