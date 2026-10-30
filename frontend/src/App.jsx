@@ -8,6 +8,7 @@ import About from "./pages/About.jsx";
 import Admin from "./pages/Admin.jsx";
 import Cart from "./pages/Cart.jsx";
 import Contact from "./pages/Contact.jsx";
+import Feedback from "./pages/Feedback.jsx";
 import Home from "./pages/Home.jsx";
 import Pricing from "./pages/Pricing.jsx";
 import Services from "./pages/Services.jsx";
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>

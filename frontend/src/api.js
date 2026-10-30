@@ -90,4 +90,15 @@ export const api = {
   async updateLeadStatus(id, status) {
     await updateDoc(doc(db, "leads", id), { status });
   },
+
+  async submitFeedback(payload) {
+    await addDoc(collection(db, "feedback"), { ...payload, createdAt: serverTimestamp() });
+  },
+
+  // Admin-only (Firestore rules require an authenticated user for this).
+  async getFeedback() {
+    const q = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
 };

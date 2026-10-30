@@ -1,9 +1,11 @@
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { MessageCircle, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { cloudinaryConfigured, offerImageSrcUrl, uploadOfferImage } from "../lib/cloudinary.js";
 import { auth, db } from "../lib/firebase.js";
+import { leadServiceLabel, sendLeadUpdateViaWhatsApp } from "../lib/whatsapp.js";
 
 const STATUS_OPTIONS = ["new", "pending", "in-progress", "completed", "cancelled"];
 
@@ -33,6 +35,34 @@ function StatusSelect({ status, onChange }) {
   );
 }
 
+function NotifyButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Notify customer via WhatsApp"
+      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#25D366]/15 text-[#128C7E] hover:bg-[#25D366]/25"
+    >
+      <MessageCircle className="h-4 w-4" />
+    </button>
+  );
+}
+
+function FeedbackStars({ rating = 0 }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star key={i} className={`h-4 w-4 ${i < rating ? "fill-amber-400 text-amber-400" : "text-ink/20"}`} />
+      ))}
+    </div>
+  );
+}
+
+function formatDate(ts) {
+  if (!ts?.toDate) return "";
+  return ts.toDate().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function Admin() {
   const [user, setUser] = useState(undefined); // undefined = still checking, null = signed out
   const [form, setForm] = useState({ email: "", password: "" });
@@ -42,6 +72,7 @@ export default function Admin() {
   const [pickups, setPickups] = useState([]);
   const [cartOrders, setCartOrders] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [feedback, setFeedback] = useState([]);
 
   const [offerFile, setOfferFile] = useState(null);
   const [offerStatus, setOfferStatus] = useState(null);
@@ -114,6 +145,12 @@ export default function Admin() {
   const updateCartStatus = makeStatusHandler(setCartOrders);
   const updateBookingStatus = makeStatusHandler(setBookings);
 
+  function notifyCustomer(type, lead) {
+    const label = leadServiceLabel(type, lead);
+    const feedbackUrl = `${window.location.origin}${import.meta.env.BASE_URL}feedback?lead=${lead.id}&service=${encodeURIComponent(label)}`;
+    sendLeadUpdateViaWhatsApp({ type, lead, feedbackUrl });
+  }
+
   useEffect(() => {
     if (!user) return;
 
@@ -125,6 +162,7 @@ export default function Admin() {
     api.getLeadsByType("pickup").then(setPickups);
     api.getLeadsByType("cart").then(setCartOrders);
     api.getLeadsByType("service").then(setBookings);
+    api.getFeedback().then(setFeedback);
   }, [user]);
 
   if (user === undefined) {
@@ -242,7 +280,10 @@ export default function Admin() {
             <div key={b.id} className="rounded-xl border border-ink/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium text-ink">{b.serviceName}</p>
-                <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
+                <div className="flex items-center gap-2">
+                  <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
+                  <NotifyButton onClick={() => notifyCustomer("service", b)} />
+                </div>
               </div>
               <p className="mt-2 text-sm text-ink/70">{b.name} &middot; {b.phone}</p>
               <p className="text-sm text-ink/60">{b.address}</p>
@@ -296,7 +337,10 @@ export default function Admin() {
                   </td>
                   <td className="px-4 py-2.5">{b.message}</td>
                   <td className="px-4 py-2.5">
-                    <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
+                    <div className="flex items-center gap-2">
+                      <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
+                      <NotifyButton onClick={() => notifyCustomer("service", b)} />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -317,7 +361,10 @@ export default function Admin() {
             <div key={o.id} className="rounded-xl border border-ink/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium text-ink">{o.name}</p>
-                <StatusSelect status={o.status} onChange={(s) => updateCartStatus(o.id, s)} />
+                <div className="flex items-center gap-2">
+                  <StatusSelect status={o.status} onChange={(s) => updateCartStatus(o.id, s)} />
+                  <NotifyButton onClick={() => notifyCustomer("cart", o)} />
+                </div>
               </div>
               <p className="mt-1 text-sm text-ink/60">{o.phone}</p>
               <p className="mt-2 text-sm text-ink/70">
@@ -351,7 +398,10 @@ export default function Admin() {
                   </td>
                   <td className="px-4 py-2.5">₹{o.total}</td>
                   <td className="px-4 py-2.5">
-                    <StatusSelect status={o.status} onChange={(s) => updateCartStatus(o.id, s)} />
+                    <div className="flex items-center gap-2">
+                      <StatusSelect status={o.status} onChange={(s) => updateCartStatus(o.id, s)} />
+                      <NotifyButton onClick={() => notifyCustomer("cart", o)} />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -372,7 +422,10 @@ export default function Admin() {
             <div key={p.id} className="rounded-xl border border-ink/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium text-ink">{p.name}</p>
-                <StatusSelect status={p.status} onChange={(s) => updatePickupStatus(p.id, s)} />
+                <div className="flex items-center gap-2">
+                  <StatusSelect status={p.status} onChange={(s) => updatePickupStatus(p.id, s)} />
+                  <NotifyButton onClick={() => notifyCustomer("pickup", p)} />
+                </div>
               </div>
               <p className="mt-1 text-sm text-ink/60">{p.phone}</p>
               <p className="text-sm text-ink/70">{p.address}</p>
@@ -402,7 +455,10 @@ export default function Admin() {
                   <td className="px-4 py-2.5">{p.address}</td>
                   <td className="px-4 py-2.5">{p.service}</td>
                   <td className="px-4 py-2.5">
-                    <StatusSelect status={p.status} onChange={(s) => updatePickupStatus(p.id, s)} />
+                    <div className="flex items-center gap-2">
+                      <StatusSelect status={p.status} onChange={(s) => updatePickupStatus(p.id, s)} />
+                      <NotifyButton onClick={() => notifyCustomer("pickup", p)} />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -423,7 +479,10 @@ export default function Admin() {
             <div key={c.id} className="rounded-xl border border-ink/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium text-ink">{c.name}</p>
-                <StatusSelect status={c.status} onChange={(s) => updateContactStatus(c.id, s)} />
+                <div className="flex items-center gap-2">
+                  <StatusSelect status={c.status} onChange={(s) => updateContactStatus(c.id, s)} />
+                  <NotifyButton onClick={() => notifyCustomer("contact", c)} />
+                </div>
               </div>
               <p className="mt-1 text-sm text-ink/60">
                 {c.phone}
@@ -455,12 +514,61 @@ export default function Admin() {
                   <td className="px-4 py-2.5">{c.email}</td>
                   <td className="px-4 py-2.5">{c.message}</td>
                   <td className="px-4 py-2.5">
-                    <StatusSelect status={c.status} onChange={(s) => updateContactStatus(c.id, s)} />
+                    <div className="flex items-center gap-2">
+                      <StatusSelect status={c.status} onChange={(s) => updateContactStatus(c.id, s)} />
+                      <NotifyButton onClick={() => notifyCustomer("contact", c)} />
+                    </div>
                   </td>
                 </tr>
               ))}
               {contacts.length === 0 && (
                 <tr><td className="px-4 py-4 text-ink/50" colSpan={5}>No messages yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Customer Feedback</h2>
+
+        {/* Mobile: stacked cards */}
+        <div className="space-y-3 sm:hidden">
+          {feedback.map((f) => (
+            <div key={f.id} className="rounded-xl border border-ink/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium text-ink">{f.service || "Service"}</p>
+                <FeedbackStars rating={f.rating} />
+              </div>
+              <p className="mt-1 text-xs text-ink/50">{formatDate(f.createdAt)}</p>
+              {f.comment && <p className="mt-2 text-sm text-ink/70">{f.comment}</p>}
+            </div>
+          ))}
+          {feedback.length === 0 && <p className="text-sm text-ink/50">No feedback submitted yet.</p>}
+        </div>
+
+        {/* Tablet/desktop: table */}
+        <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-cream">
+              <tr>
+                <th className="px-4 py-3">Service</th>
+                <th className="px-4 py-3">Rating</th>
+                <th className="px-4 py-3">Comment</th>
+                <th className="px-4 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {feedback.map((f) => (
+                <tr key={f.id} className="border-t border-ink/5">
+                  <td className="px-4 py-2.5 font-medium">{f.service || "Service"}</td>
+                  <td className="px-4 py-2.5"><FeedbackStars rating={f.rating} /></td>
+                  <td className="px-4 py-2.5">{f.comment}</td>
+                  <td className="px-4 py-2.5 text-ink/60">{formatDate(f.createdAt)}</td>
+                </tr>
+              ))}
+              {feedback.length === 0 && (
+                <tr><td className="px-4 py-4 text-ink/50" colSpan={4}>No feedback submitted yet.</td></tr>
               )}
             </tbody>
           </table>
