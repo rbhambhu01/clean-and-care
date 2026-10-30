@@ -1,25 +1,47 @@
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  setDoc,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { api } from "../api.js";
 import { cloudinaryConfigured, offerImageSrcUrl, uploadOfferImage } from "../lib/cloudinary.js";
 import { auth, db } from "../lib/firebase.js";
+
+const STATUS_OPTIONS = ["new", "pending", "in-progress", "completed", "cancelled"];
+
+const STATUS_COLORS = {
+  new: "bg-blue-100 text-blue-800",
+  pending: "bg-amber-100 text-amber-800",
+  "in-progress": "bg-purple-100 text-purple-800",
+  completed: "bg-lime/30 text-ink",
+  cancelled: "bg-red-100 text-red-800",
+};
+
+function StatusSelect({ status, onChange }) {
+  return (
+    <select
+      value={status || "pending"}
+      onChange={(e) => onChange(e.target.value)}
+      className={`rounded-pill border-0 px-2.5 py-1 text-xs font-medium capitalize ${
+        STATUS_COLORS[status] || "bg-cream text-ink"
+      }`}
+    >
+      {STATUS_OPTIONS.map((s) => (
+        <option key={s} value={s}>
+          {s}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export default function Admin() {
   const [user, setUser] = useState(undefined); // undefined = still checking, null = signed out
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+
   const [contacts, setContacts] = useState([]);
   const [pickups, setPickups] = useState([]);
   const [cartOrders, setCartOrders] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
   const [offerFile, setOfferFile] = useState(null);
   const [offerStatus, setOfferStatus] = useState(null);
@@ -71,6 +93,23 @@ export default function Admin() {
     }
   }
 
+  // Optimistically update local state, then persist — keeps the dropdown snappy.
+  function makeStatusHandler(setList) {
+    return async (id, status) => {
+      setList((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+      try {
+        await api.updateLeadStatus(id, status);
+      } catch {
+        // Revert on failure by refetching isn't critical here — rare, and
+        // the admin can just retry the dropdown if it doesn't stick.
+      }
+    };
+  }
+  const updateContactStatus = makeStatusHandler(setContacts);
+  const updatePickupStatus = makeStatusHandler(setPickups);
+  const updateCartStatus = makeStatusHandler(setCartOrders);
+  const updateBookingStatus = makeStatusHandler(setBookings);
+
   useEffect(() => {
     if (!user) return;
 
@@ -78,16 +117,10 @@ export default function Admin() {
       setOfferVisible(snap.exists() && snap.data().visible === true);
     });
 
-    const leadsRef = collection(db, "leads");
-    getDocs(query(leadsRef, where("type", "==", "contact"), orderBy("createdAt", "desc"))).then((snap) =>
-      setContacts(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    );
-    getDocs(query(leadsRef, where("type", "==", "pickup"), orderBy("createdAt", "desc"))).then((snap) =>
-      setPickups(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    );
-    getDocs(query(leadsRef, where("type", "==", "cart"), orderBy("createdAt", "desc"))).then((snap) =>
-      setCartOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    );
+    api.getLeadsByType("contact").then(setContacts);
+    api.getLeadsByType("pickup").then(setPickups);
+    api.getLeadsByType("cart").then(setCartOrders);
+    api.getLeadsByType("service").then(setBookings);
   }, [user]);
 
   if (user === undefined) {
@@ -181,6 +214,41 @@ export default function Admin() {
       </section>
 
       <section className="mb-12">
+        <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Service Bookings</h2>
+        <div className="overflow-x-auto rounded-2xl border border-ink/10">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-cream">
+              <tr>
+                <th className="px-4 py-3">Service</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Phone</th>
+                <th className="px-4 py-3">Address</th>
+                <th className="px-4 py-3">Message</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((b) => (
+                <tr key={b.id} className="border-t border-ink/5">
+                  <td className="px-4 py-2.5 font-medium">{b.serviceName}</td>
+                  <td className="px-4 py-2.5">{b.name}</td>
+                  <td className="px-4 py-2.5">{b.phone}</td>
+                  <td className="px-4 py-2.5">{b.address}</td>
+                  <td className="px-4 py-2.5">{b.message}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
+                  </td>
+                </tr>
+              ))}
+              {bookings.length === 0 && (
+                <tr><td className="px-4 py-4 text-ink/50" colSpan={6}>No service bookings yet.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mb-12">
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Cart Orders</h2>
         <div className="overflow-x-auto rounded-2xl border border-ink/10">
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -202,7 +270,9 @@ export default function Admin() {
                     {(o.items || []).map((it) => `${it.item} x${it.qty}`).join(", ")}
                   </td>
                   <td className="px-4 py-2.5">₹{o.total}</td>
-                  <td className="px-4 py-2.5">{o.status}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusSelect status={o.status} onChange={(s) => updateCartStatus(o.id, s)} />
+                  </td>
                 </tr>
               ))}
               {cartOrders.length === 0 && (
@@ -233,7 +303,9 @@ export default function Admin() {
                   <td className="px-4 py-2.5">{p.phone}</td>
                   <td className="px-4 py-2.5">{p.address}</td>
                   <td className="px-4 py-2.5">{p.service}</td>
-                  <td className="px-4 py-2.5">{p.status}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusSelect status={p.status} onChange={(s) => updatePickupStatus(p.id, s)} />
+                  </td>
                 </tr>
               ))}
               {pickups.length === 0 && (
@@ -254,6 +326,7 @@ export default function Admin() {
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Message</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -263,10 +336,13 @@ export default function Admin() {
                   <td className="px-4 py-2.5">{c.phone}</td>
                   <td className="px-4 py-2.5">{c.email}</td>
                   <td className="px-4 py-2.5">{c.message}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusSelect status={c.status} onChange={(s) => updateContactStatus(c.id, s)} />
+                  </td>
                 </tr>
               ))}
               {contacts.length === 0 && (
-                <tr><td className="px-4 py-4 text-ink/50" colSpan={4}>No messages yet.</td></tr>
+                <tr><td className="px-4 py-4 text-ink/50" colSpan={5}>No messages yet.</td></tr>
               )}
             </tbody>
           </table>

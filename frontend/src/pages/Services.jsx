@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import BookNowModal from "../components/BookNowModal.jsx";
 import IconBadge from "../components/IconBadge.jsx";
 import SectionHeading from "../components/SectionHeading.jsx";
 
 export default function Services() {
   const [services, setServices] = useState([]);
+  const [bookingService, setBookingService] = useState(null);
 
   useEffect(() => {
     api.getServices().then(setServices).catch(() => {});
@@ -27,11 +29,17 @@ export default function Services() {
       <section className="py-16">
         <div className="container-x grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((s) => (
-            <div key={s.id} className="flex gap-4 rounded-2xl border border-ink/10 p-6">
+            <div key={s.id} className="flex flex-col gap-4 rounded-2xl border border-ink/10 p-6 sm:flex-row">
               <IconBadge icon={s.icon} slug={s.slug} />
-              <div>
+              <div className="flex flex-1 flex-col">
                 <h3 className="font-serif text-lg font-semibold text-ink">{s.title}</h3>
-                <p className="mt-1 text-sm text-ink/60">{s.description}</p>
+                <p className="mt-1 flex-1 text-sm text-ink/60">{s.description}</p>
+                <button
+                  onClick={() => setBookingService(s)}
+                  className="btn-pill-outline mt-4 self-start !py-1.5 !text-xs"
+                >
+                  Book Now
+                </button>
               </div>
             </div>
           ))}
@@ -47,6 +55,10 @@ export default function Services() {
           <Link to="/contact" className="btn-pill-lime whitespace-nowrap">Schedule Pickup</Link>
         </div>
       </section>
+
+      {bookingService && (
+        <BookNowModal service={bookingService} onClose={() => setBookingService(null)} />
+      )}
     </div>
   );
 }

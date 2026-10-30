@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import BookNowModal from "../components/BookNowModal.jsx";
 import HeroIllustration from "../components/HeroIllustration.jsx";
 import OfferBanner from "../components/OfferBanner.jsx";
 import SectionHeading from "../components/SectionHeading.jsx";
@@ -18,6 +19,7 @@ export default function Home() {
   const [services, setServices] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [blog, setBlog] = useState([]);
+  const [bookingService, setBookingService] = useState(null);
 
   useEffect(() => {
     api.getServices().then(setServices).catch(() => {});
@@ -78,7 +80,7 @@ export default function Home() {
           <SectionHeading eyebrow="Services" title="We Provide" />
           <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
             {services.map((s) => (
-              <ServiceCard key={s.id} service={s} />
+              <ServiceCard key={s.id} service={s} onBookNow={setBookingService} />
             ))}
           </div>
         </div>
@@ -168,6 +170,10 @@ export default function Home() {
           <Link to="/contact" className="btn-pill-lime whitespace-nowrap">Schedule Pickup</Link>
         </div>
       </section>
+
+      {bookingService && (
+        <BookNowModal service={bookingService} onClose={() => setBookingService(null)} />
+      )}
     </div>
   );
 }

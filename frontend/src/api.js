@@ -7,6 +7,8 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "./lib/firebase.js";
 
@@ -66,5 +68,26 @@ export const api = {
       createdAt: serverTimestamp(),
     });
     return { message: "Order received! Confirm it on WhatsApp to finish." };
+  },
+
+  async submitServiceBooking(payload) {
+    await addDoc(collection(db, "leads"), {
+      type: "service",
+      ...payload,
+      status: "pending",
+      createdAt: serverTimestamp(),
+    });
+    return { message: "Booking request sent! Confirm it on WhatsApp to finish." };
+  },
+
+  // Admin-only (Firestore rules require an authenticated user for these).
+  async getLeadsByType(type) {
+    const q = query(collection(db, "leads"), where("type", "==", type), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  async updateLeadStatus(id, status) {
+    await updateDoc(doc(db, "leads", id), { status });
   },
 };
