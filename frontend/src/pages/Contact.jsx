@@ -1,5 +1,6 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone, ShoppingCart } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useCompany } from "../context/CompanyContext.jsx";
 import { sendContactViaWhatsApp, sendPickupViaWhatsApp } from "../lib/whatsapp.js";
@@ -112,8 +113,30 @@ export default function Contact() {
           {contactStatus?.success && <p className="text-sm text-lime-dark">{contactStatus.success}</p>}
         </form>
 
-        <form onSubmit={submitPickup} className="space-y-4 rounded-2xl bg-ink p-6 text-white lg:col-span-1">
+        <div className="space-y-4 rounded-2xl bg-ink p-6 text-white lg:col-span-1">
           <h3 className="font-serif text-xl font-semibold">Schedule a Pickup</h3>
+
+          <Link
+            to="/pricing"
+            className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-4 transition-colors hover:bg-white/10"
+          >
+            <div className="flex items-center gap-3">
+              <ShoppingCart className="h-5 w-5 flex-shrink-0 text-lime" />
+              <div>
+                <p className="text-sm font-semibold">Know exactly what you need?</p>
+                <p className="text-xs text-white/60">Pick items &amp; quantities from our price list</p>
+              </div>
+            </div>
+            <span className="text-lime">&rarr;</span>
+          </Link>
+
+          <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-white/40">
+            <span className="h-px flex-1 bg-white/10" />
+            or just tell us
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <form onSubmit={submitPickup} className="space-y-4">
           <Field label="Name">
             <input
               required
@@ -158,7 +181,8 @@ export default function Contact() {
             Schedule Pickup
           </button>
           {pickupStatus?.success && <p className="text-sm text-lime">{pickupStatus.success}</p>}
-        </form>
+          </form>
+        </div>
       </section>
     </div>
   );
