@@ -7,7 +7,7 @@
 - **Backend**: Firebase (Firestore + Authentication), free Spark plan. ✅ Live — no separate server to deploy or keep running.
 - **Offer banner image upload**: Cloudinary, free tier. ⬜ Needs one quick setup step below before it's active (everything else works without it).
 
-The site is now fully static (GitHub Pages) + direct-from-browser calls to Firebase and Cloudinary — there's no Express/Node server in the request path for the live site anymore. The `backend/` folder and `render.yaml` are kept in the repo for reference but are no longer part of the deployed architecture; see "What changed" below if you're wondering why.
+The site is now fully static (GitHub Pages) + direct-from-browser calls to Firebase and Cloudinary — there's no Express/Node server in the request path for the live site anymore. The old `backend/` Express project and `render.yaml` have been removed from the repo entirely; see "What changed" below if you're wondering why.
 
 ## What changed (and why)
 
@@ -78,6 +78,6 @@ If you want this on `thecleanncare.in` (or a new domain) instead of the `github.
 
 Ask if you want me to make that switch — it's a few small config changes, not a rebuild.
 
-## The old backend/Render setup (deprecated)
+## The old backend/Render setup
 
-`backend/` and `render.yaml` still exist in the repo but are no longer deployed or required. If you want them fully removed rather than just unused, say so and I'll clean them up — I left them in place for now rather than deleting working code you might still want as reference.
+The original `backend/` Express project and `render.yaml` have been removed from the repo — they're no longer deployed or required now that Firebase handles everything they used to. If you ever want to see how that version worked, it's in the git history (any commit before the Firebase migration).

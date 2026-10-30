@@ -21,9 +21,9 @@ Fully static — hosted on **GitHub Pages**, no server of our own:
   upload preset (no backend needed to keep a secret hidden).
 
 See `DEPLOYMENT.md` for the full story on why it's built this way and the
-one-time Firebase/Cloudinary setup. A `backend/` Express project and
-`render.yaml` also exist in the repo as the previous architecture's
-leftovers — no longer deployed, kept for reference only.
+one-time Firebase/Cloudinary setup. An earlier version of this project used
+a separate Express backend on Render — that's been removed; Firebase now
+handles everything a backend would have.
 
 ## Project layout
 
