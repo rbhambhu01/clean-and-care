@@ -48,6 +48,7 @@ export default function Admin() {
   const [offerVisible, setOfferVisible] = useState(false);
   const [offerImageFailed, setOfferImageFailed] = useState(false);
   const [offerVersion, setOfferVersion] = useState(0);
+  const [offerProgress, setOfferProgress] = useState(0);
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
@@ -69,8 +70,9 @@ export default function Admin() {
     e.preventDefault();
     if (!offerFile) return;
     setOfferStatus({ loading: true });
+    setOfferProgress(0);
     try {
-      await uploadOfferImage(offerFile);
+      await uploadOfferImage(offerFile, setOfferProgress);
       await setDoc(doc(db, "settings", "offerBanner"), { visible: true });
       setOfferStatus({ success: "Offer image updated — it's now live on the homepage." });
       setOfferFile(null);
@@ -79,6 +81,8 @@ export default function Admin() {
       setOfferVersion((v) => v + 1);
     } catch (err) {
       setOfferStatus({ error: err.message });
+    } finally {
+      setOfferProgress(0);
     }
   }
 
@@ -194,15 +198,31 @@ export default function Admin() {
               onChange={(e) => setOfferFile(e.target.files?.[0] || null)}
               className="block w-full text-sm text-ink/70 file:mr-4 file:rounded-pill file:border-0 file:bg-cream file:px-4 file:py-2 file:text-sm file:font-semibold file:text-ink hover:file:bg-lime/30"
             />
+            {offerStatus?.loading && (
+              <div>
+                <div className="h-2 w-full overflow-hidden rounded-pill bg-cream">
+                  <div
+                    className="h-full rounded-pill bg-lime transition-all"
+                    style={{ width: `${offerProgress}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-ink/50">Uploading… {offerProgress}%</p>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3">
-              <button type="submit" className="btn-pill-lime !py-2 !text-xs" disabled={!offerFile}>
-                Upload
+              <button
+                type="submit"
+                className="btn-pill-lime !py-2 !text-xs"
+                disabled={!offerFile || offerStatus?.loading}
+              >
+                {offerStatus?.loading ? "Uploading…" : "Upload"}
               </button>
               <button
                 type="button"
                 onClick={removeOffer}
                 className="btn-pill-outline !py-2 !text-xs"
-                disabled={!offerVisible}
+                disabled={!offerVisible || offerStatus?.loading}
               >
                 Remove Current Offer
               </button>
@@ -215,7 +235,35 @@ export default function Admin() {
 
       <section className="mb-12">
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Service Bookings</h2>
-        <div className="overflow-x-auto rounded-2xl border border-ink/10">
+
+        {/* Mobile: stacked cards */}
+        <div className="space-y-3 sm:hidden">
+          {bookings.map((b) => (
+            <div key={b.id} className="rounded-xl border border-ink/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium text-ink">{b.serviceName}</p>
+                <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
+              </div>
+              <p className="mt-2 text-sm text-ink/70">{b.name} &middot; {b.phone}</p>
+              <p className="text-sm text-ink/60">{b.address}</p>
+              {b.locationUrl && (
+                <a
+                  href={b.locationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-xs font-semibold text-lime-dark hover:underline"
+                >
+                  View pinned location &rarr;
+                </a>
+              )}
+              {b.message && <p className="mt-1 text-xs text-ink/50">{b.message}</p>}
+            </div>
+          ))}
+          {bookings.length === 0 && <p className="text-sm text-ink/50">No service bookings yet.</p>}
+        </div>
+
+        {/* Tablet/desktop: table */}
+        <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-cream">
               <tr>
@@ -233,7 +281,19 @@ export default function Admin() {
                   <td className="px-4 py-2.5 font-medium">{b.serviceName}</td>
                   <td className="px-4 py-2.5">{b.name}</td>
                   <td className="px-4 py-2.5">{b.phone}</td>
-                  <td className="px-4 py-2.5">{b.address}</td>
+                  <td className="px-4 py-2.5">
+                    {b.address}
+                    {b.locationUrl && (
+                      <a
+                        href={b.locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-xs font-semibold text-lime-dark hover:underline"
+                      >
+                        View on map &rarr;
+                      </a>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5">{b.message}</td>
                   <td className="px-4 py-2.5">
                     <StatusSelect status={b.status} onChange={(s) => updateBookingStatus(b.id, s)} />
@@ -250,7 +310,27 @@ export default function Admin() {
 
       <section className="mb-12">
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Cart Orders</h2>
-        <div className="overflow-x-auto rounded-2xl border border-ink/10">
+
+        {/* Mobile: stacked cards */}
+        <div className="space-y-3 sm:hidden">
+          {cartOrders.map((o) => (
+            <div key={o.id} className="rounded-xl border border-ink/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium text-ink">{o.name}</p>
+                <StatusSelect status={o.status} onChange={(s) => updateCartStatus(o.id, s)} />
+              </div>
+              <p className="mt-1 text-sm text-ink/60">{o.phone}</p>
+              <p className="mt-2 text-sm text-ink/70">
+                {(o.items || []).map((it) => `${it.item} x${it.qty}`).join(", ")}
+              </p>
+              <p className="mt-1 font-semibold text-ink">&#8377;{o.total}</p>
+            </div>
+          ))}
+          {cartOrders.length === 0 && <p className="text-sm text-ink/50">No cart orders yet.</p>}
+        </div>
+
+        {/* Tablet/desktop: table */}
+        <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-cream">
               <tr>
@@ -285,7 +365,25 @@ export default function Admin() {
 
       <section className="mb-12">
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Pickup Requests</h2>
-        <div className="overflow-x-auto rounded-2xl border border-ink/10">
+
+        {/* Mobile: stacked cards */}
+        <div className="space-y-3 sm:hidden">
+          {pickups.map((p) => (
+            <div key={p.id} className="rounded-xl border border-ink/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium text-ink">{p.name}</p>
+                <StatusSelect status={p.status} onChange={(s) => updatePickupStatus(p.id, s)} />
+              </div>
+              <p className="mt-1 text-sm text-ink/60">{p.phone}</p>
+              <p className="text-sm text-ink/70">{p.address}</p>
+              <p className="mt-1 text-xs text-ink/50">{p.service}</p>
+            </div>
+          ))}
+          {pickups.length === 0 && <p className="text-sm text-ink/50">No pickup requests yet.</p>}
+        </div>
+
+        {/* Tablet/desktop: table */}
+        <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-cream">
               <tr>
@@ -318,7 +416,27 @@ export default function Admin() {
 
       <section>
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Contact Messages</h2>
-        <div className="overflow-x-auto rounded-2xl border border-ink/10">
+
+        {/* Mobile: stacked cards */}
+        <div className="space-y-3 sm:hidden">
+          {contacts.map((c) => (
+            <div key={c.id} className="rounded-xl border border-ink/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium text-ink">{c.name}</p>
+                <StatusSelect status={c.status} onChange={(s) => updateContactStatus(c.id, s)} />
+              </div>
+              <p className="mt-1 text-sm text-ink/60">
+                {c.phone}
+                {c.email ? ` · ${c.email}` : ""}
+              </p>
+              {c.message && <p className="mt-1 text-sm text-ink/70">{c.message}</p>}
+            </div>
+          ))}
+          {contacts.length === 0 && <p className="text-sm text-ink/50">No messages yet.</p>}
+        </div>
+
+        {/* Tablet/desktop: table */}
+        <div className="hidden overflow-x-auto rounded-2xl border border-ink/10 sm:block">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-cream">
               <tr>

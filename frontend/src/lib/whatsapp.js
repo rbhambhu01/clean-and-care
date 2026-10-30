@@ -34,12 +34,13 @@ export function sendCartOrderViaWhatsApp({ name, phone, address, items, total })
   openWhatsApp(lines.join("\n"));
 }
 
-export function sendServiceBookingViaWhatsApp({ serviceName, name, phone, address, message }) {
+export function sendServiceBookingViaWhatsApp({ serviceName, name, phone, address, message, locationUrl }) {
   const lines = [
     `New booking request — ${serviceName}:`,
     `Name: ${name}`,
     `Phone: ${phone}`,
     `Address: ${address}`,
+    ...(locationUrl ? [`Location: ${locationUrl}`] : []),
     `Message: ${message || "N/A"}`,
   ];
   openWhatsApp(lines.join("\n"));
