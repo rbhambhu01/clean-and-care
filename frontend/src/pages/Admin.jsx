@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { MessageCircle, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import AdminPricing from "../components/AdminPricing.jsx";
 import { cloudinaryConfigured, offerImageSrcUrl, uploadOfferImage } from "../lib/cloudinary.js";
 import { auth, db } from "../lib/firebase.js";
 import { leadServiceLabel, sendLeadUpdateViaWhatsApp } from "../lib/whatsapp.js";
@@ -270,6 +271,8 @@ export default function Admin() {
           </form>
         </div>
       </section>
+
+      <AdminPricing />
 
       <section className="mb-12">
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Service Bookings</h2>

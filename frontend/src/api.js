@@ -7,10 +7,13 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "./lib/firebase.js";
+
+const DEFAULT_DISCOUNT = { active: false, percent: 0, label: "" };
 
 async function getOrdered(collectionName) {
   const q = query(collection(db, collectionName), orderBy("order"));
@@ -39,6 +42,24 @@ export const api = {
 
   getTestimonials: () => getOrdered("testimonials"),
   getBlog: () => getOrdered("blog"),
+
+  async getDiscount() {
+    const snap = await getDoc(doc(db, "settings", "discount"));
+    return snap.exists() ? { ...DEFAULT_DISCOUNT, ...snap.data() } : DEFAULT_DISCOUNT;
+  },
+
+  // Admin-only (Firestore rules require an authenticated user for these).
+  async updateDiscount(payload) {
+    await setDoc(doc(db, "settings", "discount"), payload);
+  },
+
+  async updatePricingCategoryItems(id, items) {
+    await updateDoc(doc(db, "pricingCategories", id), { items });
+  },
+
+  async updatePricingExtrasGroup(key, rows) {
+    await updateDoc(doc(db, "pricingExtras", "main"), { [key]: rows });
+  },
 
   async sendContact(payload) {
     await addDoc(collection(db, "leads"), {

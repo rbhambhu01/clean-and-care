@@ -1,5 +1,5 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useCart } from "../context/CartContext.jsx";
@@ -12,10 +12,26 @@ export default function Cart() {
   const { items, updateQty, removeItem, total, clearCart } = useCart();
   const [form, setForm] = useState({ name: "", phone: "", address: "" });
   const [status, setStatus] = useState(null);
+  const [discount, setDiscount] = useState(null);
+
+  useEffect(() => {
+    api.getDiscount().then(setDiscount).catch(() => {});
+  }, []);
+
+  const discountActive = Boolean(discount?.active && discount.percent > 0);
+  const discountAmount = discountActive ? Math.round((total * discount.percent) / 100) : 0;
+  const finalTotal = total - discountAmount;
 
   function checkout(e) {
     e.preventDefault();
-    const payload = { ...form, items, total };
+    const payload = {
+      ...form,
+      items,
+      total,
+      discountPercent: discountActive ? discount.percent : 0,
+      discountAmount,
+      finalTotal,
+    };
     sendCartOrderViaWhatsApp(payload);
     api.submitCartOrder(payload).catch(() => {});
     setStatus({ success: "Opening WhatsApp — confirm your order there to finish." });
@@ -89,9 +105,28 @@ export default function Cart() {
                 </div>
               </div>
             ))}
-            <div className="flex items-center justify-between rounded-2xl bg-cream p-4">
-              <p className="font-semibold text-ink">Total</p>
-              <p className="font-serif text-xl font-semibold text-ink">₹{total}</p>
+            <div className="rounded-2xl bg-cream p-4">
+              {discountActive ? (
+                <>
+                  <div className="flex items-center justify-between text-sm text-ink/60">
+                    <p>Subtotal</p>
+                    <p>₹{total}</p>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-sm text-lime-dark">
+                    <p>Discount ({discount.percent}% off{discount.label ? ` — ${discount.label}` : ""})</p>
+                    <p>-₹{discountAmount}</p>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-ink/10 pt-2">
+                    <p className="font-semibold text-ink">Total</p>
+                    <p className="font-serif text-xl font-semibold text-ink">₹{finalTotal}</p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-ink">Total</p>
+                  <p className="font-serif text-xl font-semibold text-ink">₹{total}</p>
+                </div>
+              )}
             </div>
           </div>
 

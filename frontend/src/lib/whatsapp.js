@@ -19,7 +19,7 @@ export function sendContactViaWhatsApp({ name, phone, email, message }) {
   openWhatsApp(lines.join("\n"));
 }
 
-export function sendCartOrderViaWhatsApp({ name, phone, address, items, total }) {
+export function sendCartOrderViaWhatsApp({ name, phone, address, items, total, discountPercent, discountAmount, finalTotal }) {
   const lines = [
     "New order from website cart:",
     `Name: ${name}`,
@@ -29,7 +29,8 @@ export function sendCartOrderViaWhatsApp({ name, phone, address, items, total })
     "Items:",
     ...items.map((l) => `- ${l.item} (${l.service.toUpperCase()}) x${l.qty} = ₹${l.price * l.qty}`),
     "",
-    `Total: ₹${total}`,
+    `Subtotal: ₹${total}`,
+    ...(discountAmount > 0 ? [`Discount (${discountPercent}%): -₹${discountAmount}`, `Total: ₹${finalTotal}`] : []),
   ];
   openWhatsApp(lines.join("\n"));
 }

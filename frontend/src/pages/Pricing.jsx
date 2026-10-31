@@ -1,16 +1,16 @@
-import { Plus } from "lucide-react";
+import { ArrowLeft, Baby, Footprints, Home as HomeIcon, Percent, Plus, Scale, Shirt, Sparkles, SprayCan } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
+import SectionHeading from "../components/SectionHeading.jsx";
 import { useCart } from "../context/CartContext.jsx";
-import { useCompany } from "../context/CompanyContext.jsx";
 
 function PriceTable({ title, items }) {
   const { addItem } = useCart();
 
   return (
-    <div className="mb-12">
-      <h3 className="mb-4 font-serif text-2xl font-semibold text-ink">{title}</h3>
+    <div>
+      {title && <h3 className="mb-4 font-serif text-2xl font-semibold text-ink">{title}</h3>}
 
       {/* Mobile: stacked cards — no horizontal scrolling needed */}
       <div className="space-y-3 sm:hidden">
@@ -93,8 +93,8 @@ function SimpleTable({ title, rows, labelKey, valueKey }) {
   const { addItem } = useCart();
 
   return (
-    <div className="mb-12">
-      <h3 className="mb-4 font-serif text-2xl font-semibold text-ink">{title}</h3>
+    <div>
+      {title && <h3 className="mb-4 font-serif text-2xl font-semibold text-ink">{title}</h3>}
 
       {/* Mobile: stacked cards */}
       <div className="space-y-3 sm:hidden">
@@ -154,49 +154,133 @@ function SimpleTable({ title, rows, labelKey, valueKey }) {
   );
 }
 
+// Styles for the 4 Firestore-driven pricingCategories docs, matched by
+// position (their order is stable — set by the seed script / admin editor,
+// never reordered in the UI).
+const CATEGORY_STYLES = [
+  { Icon: Shirt, bg: "bg-sky-600" },
+  { Icon: Sparkles, bg: "bg-rose-600" },
+  { Icon: HomeIcon, bg: "bg-amber-600" },
+  { Icon: Baby, bg: "bg-violet-600" },
+];
+
+const EXTRAS_META = [
+  { key: "byWeight", label: "By Weight Services", Icon: Scale, bg: "bg-emerald-600" },
+  { key: "shoesSpa", label: "Shoes Spa", Icon: Footprints, bg: "bg-teal-600" },
+  { key: "addOns", label: "Laundry Add-Ons", Icon: SprayCan, bg: "bg-fuchsia-600" },
+];
+
 export default function Pricing() {
-  const { company } = useCompany();
   const [data, setData] = useState({ categories: [], extras: {} });
+  const [discount, setDiscount] = useState(null);
+  const [params, setParams] = useSearchParams();
+  const activeKey = params.get("category");
 
   useEffect(() => {
     api.getPricing().then(setData).catch(() => {});
+    api.getDiscount().then(setDiscount).catch(() => {});
   }, []);
 
   const { categories, extras } = data;
 
+  const tiles = [
+    ...categories.map((c, i) => ({
+      key: c.id,
+      label: c.category,
+      blurb: "Dry Clean & Steam Iron rates",
+      type: "table",
+      items: c.items,
+      ...(CATEGORY_STYLES[i % CATEGORY_STYLES.length]),
+    })),
+    ...EXTRAS_META.filter((m) => extras?.[m.key]?.length).map((m) => ({
+      key: m.key,
+      label: m.label,
+      blurb: `${extras[m.key].length} services`,
+      type: "simple",
+      rows: extras[m.key],
+      Icon: m.Icon,
+      bg: m.bg,
+    })),
+  ];
+
+  const activeTile = tiles.find((t) => t.key === activeKey) || null;
+
+  function openCategory(key) {
+    setParams({ category: key });
+  }
+
+  function backToCategories() {
+    setParams({});
+  }
+
+  const discountActive = Boolean(discount?.active && discount.percent > 0);
+
   return (
     <div>
-      <section className="bg-cream py-16 text-center">
-        <div className="container-x">
-          <p className="eyebrow">Pricing</p>
-          <h1 className="text-3xl font-semibold text-ink sm:text-4xl lg:text-5xl">Transparent, Fair Pricing</h1>
-          <p className="mx-auto mt-5 max-w-2xl text-ink/70">
-            Flat 10% off on your first order. Express service available for a nominal additional fee.
-            Add items to your cart and checkout via WhatsApp.
-          </p>
-        </div>
-      </section>
+      {discountActive && (
+        <section className="bg-ink py-4 text-center text-white">
+          <div className="container-x flex items-center justify-center gap-2 text-sm font-medium">
+            <Percent className="h-4 w-4 text-lime" />
+            <span>
+              Today's offer: <span className="text-lime">{discount.percent}% off</span>
+              {discount.label ? ` — ${discount.label}` : ""} — applied automatically at checkout
+            </span>
+          </div>
+        </section>
+      )}
 
-      <section className="container-x py-16">
-        {categories.map((c) => (
-          <PriceTable key={c.id} title={c.category} items={c.items} />
-        ))}
-
-        {extras?.byWeight && (
-          <SimpleTable title="By Weight Services" rows={extras.byWeight} labelKey="service" valueKey="price" />
-        )}
-        {extras?.shoesSpa && (
-          <SimpleTable title="Shoes Spa" rows={extras.shoesSpa} labelKey="service" valueKey="price" />
-        )}
-        {extras?.addOns && (
-          <SimpleTable title="Laundry Add-Ons" rows={extras.addOns} labelKey="service" valueKey="price" />
-        )}
-      </section>
+      {!activeTile ? (
+        <section className="py-16">
+          <div className="container-x">
+            <SectionHeading eyebrow="Browse by" title="Category" />
+            <div className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+              {tiles.map(({ key, label, blurb, Icon, bg }) => (
+                <button
+                  key={key}
+                  onClick={() => openCategory(key)}
+                  className={`group relative flex min-h-[172px] flex-col justify-between gap-5 overflow-hidden rounded-3xl p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:min-h-[200px] sm:gap-6 sm:p-7 ${bg}`}
+                >
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10 transition-transform group-hover:scale-110" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 sm:h-12 sm:w-12">
+                    <Icon className="h-5 w-5 text-white sm:h-6 sm:w-6" strokeWidth={1.75} />
+                  </div>
+                  <div className="relative">
+                    <h3 className="font-serif text-lg font-semibold text-white sm:text-xl">{label}</h3>
+                    <p className="mt-1 text-xs text-white/85 sm:text-sm">{blurb}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="py-16">
+          <div className="container-x">
+            <button
+              onClick={backToCategories}
+              className="mb-6 flex items-center gap-1.5 text-sm font-semibold text-lime-dark hover:underline"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              All Categories
+            </button>
+            <SectionHeading eyebrow="Pricing" title={activeTile.label} />
+            <div className="mt-10">
+              {activeTile.type === "table" ? (
+                <PriceTable items={activeTile.items} />
+              ) : (
+                <SimpleTable rows={activeTile.rows} labelKey="service" valueKey="price" />
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="pb-16">
         <div className="container-x flex flex-col items-center justify-between gap-6 rounded-3xl bg-ink px-8 py-10 text-white lg:flex-row">
           <div>
-            <p className="eyebrow !text-lime">{company?.offer || "Flat 10% Off on your first order"}</p>
+            <p className="eyebrow !text-lime">
+              {discountActive ? `${discount.percent}% off — ${discount.label || "today only"}` : "Flat rates, no surprises"}
+            </p>
             <h3 className="text-3xl font-semibold">Ready to get started?</h3>
           </div>
           <Link to="/contact" className="btn-pill-lime whitespace-nowrap">Schedule Pickup</Link>
