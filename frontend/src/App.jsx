@@ -1,5 +1,6 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import BottomNav from "./components/BottomNav.jsx";
 import Footer from "./components/Footer.jsx";
 import Navbar from "./components/Navbar.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
@@ -13,11 +14,22 @@ import Home from "./pages/Home.jsx";
 import Pricing from "./pages/Pricing.jsx";
 import Services from "./pages/Services.jsx";
 
+// On a plain route change, jump to top. On a route change that carries a
+// hash (e.g. the bottom nav's Offers tab, "/#offer"), scroll that section
+// into view instead — plain browser hash-scroll doesn't fire on client-side
+// SPA navigation, only on a full page load.
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
+    if (hash) {
+      const el = document.getElementById(hash.slice(1));
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
     window.scrollTo(0, 0);
-  }, [pathname]);
+  }, [pathname, hash]);
   return null;
 }
 
@@ -40,6 +52,9 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        {/* Clearance for the fixed bottom nav so it doesn't cover footer content. */}
+        <div className="h-16 sm:hidden" />
+        <BottomNav />
       </CartProvider>
     </CompanyProvider>
   );

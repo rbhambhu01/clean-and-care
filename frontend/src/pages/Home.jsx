@@ -54,7 +54,9 @@ export default function Home() {
         </div>
       </section>
 
-      <OfferBanner />
+      <div id="offer">
+        <OfferBanner />
+      </div>
 
       {/* Why we are */}
       <section className="py-16">
