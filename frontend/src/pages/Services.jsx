@@ -44,17 +44,6 @@ export default function Services() {
 
   return (
     <div>
-      <section className="bg-cream py-16 text-center">
-        <div className="container-x">
-          <p className="eyebrow">Services</p>
-          <h1 className="text-3xl font-semibold text-ink sm:text-4xl lg:text-5xl">Everything Your Fabrics Need</h1>
-          <p className="mx-auto mt-5 max-w-2xl text-ink/70">
-            From everyday laundry to delicate dry cleaning, we cover it all with doorstep pickup
-            &amp; drop and a 2-hour express option.
-          </p>
-        </div>
-      </section>
-
       {!activeCategory ? (
         <section className="py-16">
           <div className="container-x">
