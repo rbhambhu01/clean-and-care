@@ -57,13 +57,23 @@ export default function Navbar() {
           </NavLink>
         </div>
 
-        <button
-          className="text-white lg:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
-        </button>
+        <div className="flex items-center gap-4 lg:hidden">
+          <NavLink to="/cart" className="relative text-white/85 hover:text-lime" aria-label="Cart">
+            <ShoppingCart className="h-6 w-6" />
+            {count > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-lime text-[10px] font-bold text-ink">
+                {count}
+              </span>
+            )}
+          </NavLink>
+          <button
+            className="text-white"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -83,17 +93,6 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            <NavLink
-              to="/cart"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `rounded-md px-2 py-2.5 text-sm font-medium uppercase tracking-wide ${
-                  isActive ? "bg-white/5 text-lime" : "text-white/85"
-                }`
-              }
-            >
-              Cart{count > 0 ? ` (${count})` : ""}
-            </NavLink>
             <NavLink to="/contact" className="btn-pill-lime mt-2 justify-center">
               Schedule Pickup
             </NavLink>

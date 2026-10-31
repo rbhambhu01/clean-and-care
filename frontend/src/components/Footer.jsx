@@ -3,22 +3,13 @@ import { Link } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext.jsx";
 import { img } from "../lib/assets.js";
 
-const CATEGORY_LINKS = [
-  { key: "cleaning", label: "Cleaning" },
-  { key: "sanitization", label: "Sanitization" },
-  { key: "ironing", label: "Ironing" },
-  { key: "furniture", label: "Furniture" },
-  { key: "dryclean", label: "Dryclean" },
-  { key: "home-services", label: "Home Services" },
-];
-
 export default function Footer() {
   const { company } = useCompany();
 
   return (
     <footer className="bg-ink text-white">
       <div className="container-x py-10">
-        <div className="grid grid-cols-1 gap-10 py-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 py-10 sm:grid-cols-2">
           <div>
             <img src={img("logo-mark.png")} alt="Clean & Care" className="mb-4 h-14 w-14" />
             <p className="text-sm italic text-white/70">
@@ -38,26 +29,6 @@ export default function Footer() {
                 <Linkedin className="h-4 w-4" />
               </a>
             </div>
-          </div>
-
-          <div>
-            <h4 className="mb-4 font-serif text-xl font-semibold">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-white/75">
-              <li><Link to="/about" className="hover:text-lime">About Us</Link></li>
-              <li><Link to="/pricing" className="hover:text-lime">Pricing</Link></li>
-              <li><Link to="/contact" className="hover:text-lime">Contact Us</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-4 font-serif text-xl font-semibold">Services</h4>
-            <ul className="space-y-2 text-sm text-white/75">
-              {CATEGORY_LINKS.map((c) => (
-                <li key={c.key}>
-                  <Link to={`/services?category=${c.key}`} className="hover:text-lime">{c.label}</Link>
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div>
