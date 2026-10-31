@@ -30,8 +30,8 @@ handles everything a backend would have.
 ```
 frontend/
   src/
-    pages/              # Home, About, Services, Pricing, Cart, Contact, Admin
-    components/          # Navbar, Footer, ServiceCard, OfferBanner, etc.
+    pages/              # Home, About, Services, Pricing, Cart, Contact, Feedback, Admin
+    components/          # Navbar, Footer, ServiceCard, BookNowModal, OfferBanner, etc.
     context/               # CompanyContext, CartContext (localStorage-backed)
     lib/
       firebase.js            # Firebase app/auth/db init
@@ -62,15 +62,30 @@ Cloudinary, same as production.
 
 - **Public pages**: Home, About Us, Services, Pricing (full item-level price
   table: Men's/Women's/Kids/Home DC & Steam Iron pricing, by-weight laundry,
-  shoe spa, add-ons — each with an "Add to Cart" button), Contact Us.
+  shoe spa, add-ons — each with an "Add to Cart" button), Contact Us. All
+  tables use mobile-first card layouts (no forced horizontal scrolling).
 - **Cart**: client-side cart (persisted to `localStorage`), checkout collects
   name/phone/address, then opens a pre-filled WhatsApp chat with the itemized
   order and also saves it to Firestore for the admin dashboard.
+- **Book Now** (per service, on Home and Services pages): collects name,
+  phone, address, and optionally the visitor's live location (browser
+  Geolocation API, added as a Google Maps link) — sent via WhatsApp and
+  saved to Firestore as a `service` lead.
 - **Contact & pickup forms**: same WhatsApp-first pattern — opens a pre-filled
   chat to the business number, and quietly saves to Firestore too.
-- **Admin dashboard** (`/admin`): Firebase Auth login (email/password), view
-  cart orders / pickup requests / contact messages, and upload/remove the
-  homepage offer-banner image.
+- **Feedback page** (`/feedback?lead=<id>&service=<name>`): star rating +
+  comment, reached via the link the admin sends when marking a lead
+  complete (see below). Saves to the `feedback` collection.
+- **Admin dashboard** (`/admin`): Firebase Auth login (email/password).
+  - View and manage all leads (service bookings, cart orders, pickup
+    requests, contact messages) with a per-lead status dropdown
+    (new/pending/in-progress/completed/cancelled).
+  - One-click "Notify customer" button per lead — opens WhatsApp addressed
+    to the *customer's* number with a status update; when status is
+    "completed" it's a thank-you message with the feedback link attached.
+  - View submitted customer feedback (rating + comment).
+  - Upload/remove the homepage offer-banner image (Cloudinary, with an
+    upload progress bar and automatic format/size optimization).
 
 ## Firestore data model
 
@@ -83,7 +98,8 @@ Cloudinary, same as production.
 | `testimonials/{id}`       | one doc per testimonial                                        | public     | admin only   |
 | `blog/{id}`                 | one doc per post                                                  | public     | admin only   |
 | `settings/offerBanner`        | `{ visible: boolean }` — gates the homepage offer banner             | public     | admin only   |
-| `leads/{id}`                     | contact / pickup / cart submissions, `type` field distinguishes them   | admin only | public create only |
+| `leads/{id}`                     | contact / pickup / cart / service submissions, `type` field distinguishes them, includes `status` and (for `service` bookings) optional `locationUrl`/`lat`/`lng` | admin only | public create only |
+| `feedback/{id}`                     | `{ leadId, service, rating, comment, createdAt }` — submitted via the post-completion feedback link | admin only | public create only |
 
 ## Notes for going live
 
