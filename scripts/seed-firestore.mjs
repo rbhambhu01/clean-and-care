@@ -70,21 +70,21 @@ const company = {
 };
 
 const services = [
-  { slug: "dry-cleaning", title: "Dry Cleaning", icon: "shirt", category: "fabric", description: "Garments treated using eco-friendly solvents like oil-based hydrocarbons with imported machinery. Covers bridal wear, silk sarees, woollens, suits, lehengas and more." },
-  { slug: "wet-cleaning", title: "Wet Cleaning", icon: "washing-machine", category: "fabric", description: "Water-based cleaning with water softener technology included at no extra cost, safe for delicate fabrics." },
-  { slug: "steam-ironing", title: "Steam Ironing", icon: "iron", category: "fabric", description: "Available for clothing and linens, with customizable temperature and steam levels per customer preference." },
-  { slug: "bag-cleaning", title: "Bag Cleaning", icon: "briefcase", category: "accessories", description: "Deep cleaning and conditioning for bags of all materials to restore shape, colour and finish." },
-  { slug: "shoe-cleaning", title: "Shoe Cleaning", icon: "shoe", category: "accessories", description: "Thorough cleaning, stain removal, conditioning, repairs and optional weatherproofing for leather, suede and other shoe types." },
-  { slug: "carpet-cleaning", title: "Carpet Cleaning", icon: "carpet", category: "home", description: "Specialized deep cleaning for carpets that lifts dust, allergens and stains while protecting fibres." },
-  { slug: "curtain-cleaning", title: "Curtain Cleaning", icon: "curtains", category: "home", description: "Gentle cleaning for curtains and blinds that removes dust and odours without damaging fabric." },
-  { slug: "toy-cleaning", title: "Toy Cleaning", icon: "toy", category: "specialized", description: "Child-safe cleaning process for stuffed animals and plush toys, including stain removal." },
-  { slug: "home-sanitize", title: "Home Sanitize", icon: "spray", category: "home", description: "Professional home sanitizing service to keep your living spaces hygienic and safe." },
-  { slug: "car-cleaning", title: "Car Cleaning", icon: "car", category: "specialized", description: "Interior and exterior wash, vacuuming, dashboard and window cleaning, plus wax treatment." },
-  { slug: "home-cleaning", title: "Home Cleaning", icon: "home", category: "home", description: "General home cleaning services tailored to keep every corner of your home spotless." },
-  { slug: "sofa-cleaning", title: "Sofa Cleaning", icon: "sofa", category: "home", description: "Specialized upholstery cleaning that removes stains and odours while protecting the fabric." },
-  { slug: "premium-laundry", title: "Premium Laundry", icon: "sparkles", category: "fabric", description: "Every cloth goes through a comprehensive 6 stage process enabling us to deliver sparkling & fresh clothes, every time. Standard turnaround 24 hours; express service available." },
-  { slug: "laundry-by-kg", title: "Laundry by Kg", icon: "scale", category: "fabric", description: "Affordable wash & fold / wash & steam iron service billed by weight, ideal for everyday laundry." },
-  { slug: "shoes-spa", title: "Shoes Spa", icon: "shoe", category: "accessories", description: "A complete spa treatment for leather, sports, canvas and suede shoes to restore their original shine." },
+  { slug: "dry-cleaning", title: "Dry Cleaning", icon: "shirt", category: "dryclean", description: "Garments treated using eco-friendly solvents like oil-based hydrocarbons with imported machinery. Covers bridal wear, silk sarees, woollens, suits, lehengas and more." },
+  { slug: "wet-cleaning", title: "Wet Cleaning", icon: "washing-machine", category: "dryclean", description: "Water-based cleaning with water softener technology included at no extra cost, safe for delicate fabrics." },
+  { slug: "steam-ironing", title: "Steam Ironing", icon: "iron", category: "ironing", description: "Available for clothing and linens, with customizable temperature and steam levels per customer preference." },
+  { slug: "bag-cleaning", title: "Bag Cleaning", icon: "briefcase", category: "cleaning", description: "Deep cleaning and conditioning for bags of all materials to restore shape, colour and finish." },
+  { slug: "shoe-cleaning", title: "Shoe Cleaning", icon: "shoe", category: "cleaning", description: "Thorough cleaning, stain removal, conditioning, repairs and optional weatherproofing for leather, suede and other shoe types." },
+  { slug: "carpet-cleaning", title: "Carpet Cleaning", icon: "carpet", category: "furniture", description: "Specialized deep cleaning for carpets that lifts dust, allergens and stains while protecting fibres." },
+  { slug: "curtain-cleaning", title: "Curtain Cleaning", icon: "curtains", category: "furniture", description: "Gentle cleaning for curtains and blinds that removes dust and odours without damaging fabric." },
+  { slug: "toy-cleaning", title: "Toy Cleaning", icon: "toy", category: "cleaning", description: "Child-safe cleaning process for stuffed animals and plush toys, including stain removal." },
+  { slug: "home-sanitize", title: "Home Sanitize", icon: "spray", category: "sanitization", description: "Professional home sanitizing service to keep your living spaces hygienic and safe." },
+  { slug: "car-cleaning", title: "Car Cleaning", icon: "car", category: "home-services", description: "Interior and exterior wash, vacuuming, dashboard and window cleaning, plus wax treatment." },
+  { slug: "home-cleaning", title: "Home Cleaning", icon: "home", category: "home-services", description: "General home cleaning services tailored to keep every corner of your home spotless." },
+  { slug: "sofa-cleaning", title: "Sofa Cleaning", icon: "sofa", category: "furniture", description: "Specialized upholstery cleaning that removes stains and odours while protecting the fabric." },
+  { slug: "premium-laundry", title: "Premium Laundry", icon: "sparkles", category: "dryclean", description: "Every cloth goes through a comprehensive 6 stage process enabling us to deliver sparkling & fresh clothes, every time. Standard turnaround 24 hours; express service available." },
+  { slug: "laundry-by-kg", title: "Laundry by Kg", icon: "scale", category: "dryclean", description: "Affordable wash & fold / wash & steam iron service billed by weight, ideal for everyday laundry." },
+  { slug: "shoes-spa", title: "Shoes Spa", icon: "shoe", category: "cleaning", description: "A complete spa treatment for leather, sports, canvas and suede shoes to restore their original shine." },
 ];
 
 const pricingCategories = [
