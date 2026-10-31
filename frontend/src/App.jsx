@@ -55,7 +55,7 @@ export default function App() {
         {/* Clearance for the fixed bottom nav so it doesn't cover footer content.
             Matches BottomNav's own height (~56px content + the iOS home-indicator
             safe area), not a flat value — notched iPhones need more than 64px. */}
-        <div className="sm:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom))" }} />
+        <div className="lg:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom))" }} />
         <BottomNav />
       </CartProvider>
     </CompanyProvider>

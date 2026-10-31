@@ -8,14 +8,17 @@ const ITEMS = [
   { to: "/#offer", label: "Offers", icon: Percent, match: (loc) => loc.pathname === "/" && loc.hash === "#offer" },
 ];
 
-// Mobile-only bottom tab bar (sm:hidden mirrors the mobile-card breakpoint
-// used elsewhere — Pricing/Admin tables switch at the same point).
+// Visible anywhere the Navbar shows its hamburger menu instead of the full
+// desktop nav (lg:hidden, not sm:hidden) — Navbar's mobile dropdown only
+// keeps About/Contact/Cart now, counting on this bar to cover Home/Services/
+// Pricing the rest of the way up to the lg breakpoint. A narrower cutoff
+// here would leave a tablet-width gap where neither nav offers those links.
 export default function BottomNav() {
   const location = useLocation();
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 flex items-stretch justify-around border-t border-ink/10 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.06)] sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 flex items-stretch justify-around border-t border-ink/10 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.06)] lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {ITEMS.map(({ to, label, icon: Icon, match }) => {

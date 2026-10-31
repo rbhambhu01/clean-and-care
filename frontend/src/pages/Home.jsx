@@ -71,7 +71,8 @@ export default function Home() {
             <h2 className="text-3xl font-semibold text-ink sm:text-4xl">
               {company?.about?.whyWeAre?.heading}
             </h2>
-            <p className="mt-5 text-ink/70">{company?.about?.whyWeAre?.body}</p>
+            <p className="mt-5 line-clamp-3 text-ink/70">{company?.about?.whyWeAre?.body}</p>
+            <Link to="/about" className="btn-pill-lime mt-6">Read More</Link>
           </div>
         </div>
       </section>

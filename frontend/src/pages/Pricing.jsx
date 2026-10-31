@@ -1,7 +1,9 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useCart } from "../context/CartContext.jsx";
+import { useCompany } from "../context/CompanyContext.jsx";
 
 function PriceTable({ title, items }) {
   const { addItem } = useCart();
@@ -153,6 +155,7 @@ function SimpleTable({ title, rows, labelKey, valueKey }) {
 }
 
 export default function Pricing() {
+  const { company } = useCompany();
   const [data, setData] = useState({ categories: [], extras: {} });
 
   useEffect(() => {
@@ -188,6 +191,16 @@ export default function Pricing() {
         {extras?.addOns && (
           <SimpleTable title="Laundry Add-Ons" rows={extras.addOns} labelKey="service" valueKey="price" />
         )}
+      </section>
+
+      <section className="pb-16">
+        <div className="container-x flex flex-col items-center justify-between gap-6 rounded-3xl bg-ink px-8 py-10 text-white lg:flex-row">
+          <div>
+            <p className="eyebrow !text-lime">{company?.offer || "Flat 10% Off on your first order"}</p>
+            <h3 className="text-3xl font-semibold">Ready to get started?</h3>
+          </div>
+          <Link to="/contact" className="btn-pill-lime whitespace-nowrap">Schedule Pickup</Link>
+        </div>
       </section>
     </div>
   );

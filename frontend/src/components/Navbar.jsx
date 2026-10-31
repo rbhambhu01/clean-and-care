@@ -12,6 +12,10 @@ const LINKS = [
   { to: "/contact", label: "Contact Us" },
 ];
 
+// Below lg, Home/Services/Pricing already live in the bottom tab bar
+// (BottomNav) — no need to repeat them in this dropdown too.
+const MOBILE_MENU_LINKS = LINKS.filter((l) => l.to === "/about" || l.to === "/contact");
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { count } = useCart();
@@ -65,7 +69,7 @@ export default function Navbar() {
       {open && (
         <div className="border-t border-white/10 bg-ink lg:hidden">
           <nav className="container-x flex flex-col gap-1 py-4">
-            {LINKS.map((link) => (
+            {MOBILE_MENU_LINKS.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
