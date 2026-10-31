@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { Armchair, ArrowLeft, Flame, Home as HomeIcon, Shirt, Sparkles, SprayCan } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
@@ -6,13 +6,16 @@ import BookNowModal from "../components/BookNowModal.jsx";
 import IconBadge from "../components/IconBadge.jsx";
 import SectionHeading from "../components/SectionHeading.jsx";
 
+// Evenly spread around the hue wheel so all six read as distinct at a
+// glance; all "-600" (Flame/amber bumped a step for the same contrast
+// level) so white text stays reliably readable on every tile.
 const CATEGORIES = [
-  { key: "cleaning", label: "Cleaning", icon: "sparkles", blurb: "Bags, shoes, toys and everyday item cleaning" },
-  { key: "sanitization", label: "Sanitization", icon: "spray", blurb: "Professional sanitizing for a hygienic home" },
-  { key: "ironing", label: "Ironing", icon: "iron", blurb: "Crisp, press-perfect clothes and linens" },
-  { key: "furniture", label: "Furniture", icon: "sofa", blurb: "Carpets, curtains and upholstery deep cleaning" },
-  { key: "dryclean", label: "Dryclean", icon: "shirt", blurb: "Dry cleaning, wet cleaning and laundry by kg" },
-  { key: "home-services", label: "Home Services", icon: "home", blurb: "On-site cleaning for your home and car" },
+  { key: "cleaning", label: "Cleaning", Icon: Sparkles, blurb: "Bags, shoes, toys and everyday items", bg: "bg-sky-600" },
+  { key: "sanitization", label: "Sanitization", Icon: SprayCan, blurb: "A hygienic, sanitized home", bg: "bg-emerald-600" },
+  { key: "ironing", label: "Ironing", Icon: Flame, blurb: "Crisp, press-perfect clothes", bg: "bg-amber-600" },
+  { key: "furniture", label: "Furniture", Icon: Armchair, blurb: "Carpets, curtains and upholstery", bg: "bg-rose-600" },
+  { key: "dryclean", label: "Dryclean", Icon: Shirt, blurb: "Dry cleaning, wet cleaning, laundry by kg", bg: "bg-indigo-600" },
+  { key: "home-services", label: "Home Services", Icon: HomeIcon, blurb: "On-site cleaning for home and car", bg: "bg-fuchsia-600" },
 ];
 
 export default function Services() {
@@ -56,17 +59,20 @@ export default function Services() {
         <section className="py-16">
           <div className="container-x">
             <SectionHeading eyebrow="Browse by" title="Category" />
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {CATEGORIES.map((c) => (
+            <div className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+              {CATEGORIES.map(({ key, label, Icon, blurb, bg }) => (
                 <button
-                  key={c.key}
-                  onClick={() => openCategory(c.key)}
-                  className="flex items-center gap-4 rounded-2xl border border-ink/10 p-6 text-left transition-shadow hover:shadow-lg"
+                  key={key}
+                  onClick={() => openCategory(key)}
+                  className={`group relative flex min-h-[172px] flex-col justify-between gap-5 overflow-hidden rounded-3xl p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:min-h-[200px] sm:gap-6 sm:p-7 ${bg}`}
                 >
-                  <IconBadge icon={c.icon} size="lg" />
-                  <div>
-                    <h3 className="font-serif text-lg font-semibold text-ink">{c.label}</h3>
-                    <p className="mt-1 text-sm text-ink/60">{c.blurb}</p>
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10 transition-transform group-hover:scale-110" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 sm:h-12 sm:w-12">
+                    <Icon className="h-5 w-5 text-white sm:h-6 sm:w-6" strokeWidth={1.75} />
+                  </div>
+                  <div className="relative">
+                    <h3 className="font-serif text-lg font-semibold text-white sm:text-xl">{label}</h3>
+                    <p className="mt-1 text-xs text-white/85 sm:text-sm">{blurb}</p>
                   </div>
                 </button>
               ))}
