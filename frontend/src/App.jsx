@@ -52,8 +52,10 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
-        {/* Clearance for the fixed bottom nav so it doesn't cover footer content. */}
-        <div className="h-16 sm:hidden" />
+        {/* Clearance for the fixed bottom nav so it doesn't cover footer content.
+            Matches BottomNav's own height (~56px content + the iOS home-indicator
+            safe area), not a flat value — notched iPhones need more than 64px. */}
+        <div className="sm:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom))" }} />
         <BottomNav />
       </CartProvider>
     </CompanyProvider>

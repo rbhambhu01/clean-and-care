@@ -17,13 +17,14 @@ const CATEGORIES = [
 
 export default function Services() {
   const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [bookingService, setBookingService] = useState(null);
   const [params, setParams] = useSearchParams();
   const activeKey = params.get("category");
   const activeCategory = CATEGORIES.find((c) => c.key === activeKey) || null;
 
   useEffect(() => {
-    api.getServices().then(setServices).catch(() => {});
+    api.getServices().then(setServices).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   function openCategory(key) {
@@ -100,7 +101,9 @@ export default function Services() {
                 </div>
               ))}
               {categoryServices.length === 0 && (
-                <p className="text-sm text-ink/50">No services in this category yet.</p>
+                <p className="text-sm text-ink/50">
+                  {loading ? "Loading services…" : "No services in this category yet."}
+                </p>
               )}
             </div>
           </div>
