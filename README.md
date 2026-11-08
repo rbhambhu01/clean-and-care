@@ -19,6 +19,11 @@ Fully static — hosted on **GitHub Pages**, no server of our own:
   called directly from the browser.
 - **Cloudinary** (free tier) — offer-banner image upload, via an unsigned
   upload preset (no backend needed to keep a secret hidden).
+- **cloudflare-worker/** (free tier) — the one real server in this project.
+  Receives incoming WhatsApp messages (sent to 8160677875, via Meta's
+  WhatsApp Business Cloud API) and writes them to Firestore so they show up
+  in the admin dashboard's WhatsApp Inbox. See `cloudflare-worker/README.md`
+  for setup — it's optional and the rest of the site works without it.
 
 See `DEPLOYMENT.md` for the full story on why it's built this way and the
 one-time Firebase/Cloudinary setup. An earlier version of this project used
@@ -84,6 +89,9 @@ Cloudinary, same as production.
     to the *customer's* number with a status update; when status is
     "completed" it's a thank-you message with the feedback link attached.
   - View submitted customer feedback (rating + comment).
+  - WhatsApp Inbox — incoming messages to 8160677875 (requires the optional
+    Cloudflare Worker, see `cloudflare-worker/README.md`), with a
+    mark-as-read toggle and a reply link.
   - Upload/remove the homepage offer-banner image (Cloudinary, with an
     upload progress bar and automatic format/size optimization).
 
@@ -100,6 +108,7 @@ Cloudinary, same as production.
 | `settings/offerBanner`        | `{ visible: boolean }` — gates the homepage offer banner             | public     | admin only   |
 | `leads/{id}`                     | contact / pickup / cart / service submissions, `type` field distinguishes them, includes `status` and (for `service` bookings) optional `locationUrl`/`lat`/`lng` | admin only | public create only |
 | `feedback/{id}`                     | `{ leadId, service, rating, comment, createdAt }` — submitted via the post-completion feedback link | admin only | public create only |
+| `whatsappMessages/{id}`                     | `{ from, name, text, messageId, read, createdAt }` — written by the Cloudflare Worker, never by the client | admin only | server only (service account) |
 
 ## Notes for going live
 

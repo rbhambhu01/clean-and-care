@@ -122,4 +122,16 @@ export const api = {
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
+
+  // Admin-only. Written server-side by the Cloudflare Worker webhook
+  // receiver (see cloudflare-worker/), never by the client.
+  async getWhatsAppMessages() {
+    const q = query(collection(db, "whatsappMessages"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  async markWhatsAppMessageRead(id, read) {
+    await updateDoc(doc(db, "whatsappMessages", id), { read });
+  },
 };

@@ -4,6 +4,7 @@ import { MessageCircle, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import AdminPricing from "../components/AdminPricing.jsx";
+import AdminWhatsAppInbox from "../components/AdminWhatsAppInbox.jsx";
 import { cloudinaryConfigured, offerImageSrcUrl, uploadOfferImage } from "../lib/cloudinary.js";
 import { auth, db } from "../lib/firebase.js";
 import { leadServiceLabel, sendLeadUpdateViaWhatsApp } from "../lib/whatsapp.js";
@@ -271,6 +272,8 @@ export default function Admin() {
           </form>
         </div>
       </section>
+
+      <AdminWhatsAppInbox />
 
       <AdminPricing />
 

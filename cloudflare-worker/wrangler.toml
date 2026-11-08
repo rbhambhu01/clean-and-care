@@ -1,0 +1,12 @@
+name = "clean-care-whatsapp-webhook"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Secrets (set via `wrangler secret put <NAME>`, never written here):
+#   WHATSAPP_VERIFY_TOKEN  — a string you make up, also entered in Meta's
+#                            webhook setup screen
+#   META_APP_SECRET        — from Meta App Dashboard > App Settings > Basic
+#   GCP_CLIENT_EMAIL        — from the Google Cloud service account JSON key
+#   GCP_PRIVATE_KEY         — from the same JSON key ("private_key" field,
+#                            keep the \n line breaks as literal \n)
+#   FIREBASE_PROJECT_ID     — "clean-and-care-laundry"

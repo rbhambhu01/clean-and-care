@@ -58,5 +58,17 @@ service cloud.firestore {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
+
+    // Incoming WhatsApp messages (number 8160677875, via Meta's Cloud API
+    // webhook). Nobody creates/deletes from the client — the Cloudflare
+    // Worker webhook receiver writes these using a Google Cloud service
+    // account, which authenticates through Firestore's REST API with IAM
+    // credentials and bypasses these rules entirely (rules only govern the
+    // client SDK). The admin can read, and can only toggle the `read` flag.
+    match /whatsappMessages/{docId} {
+      allow create, delete: if false;
+      allow read: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read"]);
+    }
   }
 }
