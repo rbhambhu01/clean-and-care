@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import SectionHeading from "../components/SectionHeading.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import { img } from "../lib/assets.js";
 
 function PriceTable({ title, items }) {
   const { addItem } = useCart();
@@ -156,18 +157,19 @@ function SimpleTable({ title, rows, labelKey, valueKey }) {
 
 // Styles for the 4 Firestore-driven pricingCategories docs, matched by
 // position (their order is stable — set by the seed script / admin editor,
-// never reordered in the UI).
+// never reordered in the UI). Each has a real photo under a same-hue
+// gradient, same pattern as the Services category grid.
 const CATEGORY_STYLES = [
-  { Icon: Shirt, bg: "bg-sky-600" },
-  { Icon: Sparkles, bg: "bg-rose-600" },
-  { Icon: HomeIcon, bg: "bg-amber-600" },
-  { Icon: Baby, bg: "bg-violet-600" },
+  { Icon: Shirt, bg: "bg-sky-600", photo: "mens", overlay: "from-sky-950/90 via-sky-900/40" },
+  { Icon: Sparkles, bg: "bg-rose-600", photo: "womens", overlay: "from-rose-950/90 via-rose-900/40" },
+  { Icon: HomeIcon, bg: "bg-amber-600", photo: "pricing-home", overlay: "from-amber-950/90 via-amber-900/40" },
+  { Icon: Baby, bg: "bg-violet-600", photo: "kids", overlay: "from-violet-950/90 via-violet-900/40" },
 ];
 
 const EXTRAS_META = [
-  { key: "byWeight", label: "By Weight Services", Icon: Scale, bg: "bg-emerald-600" },
-  { key: "shoesSpa", label: "Shoes Spa", Icon: Footprints, bg: "bg-teal-600" },
-  { key: "addOns", label: "Laundry Add-Ons", Icon: SprayCan, bg: "bg-fuchsia-600" },
+  { key: "byWeight", label: "By Weight Services", Icon: Scale, bg: "bg-emerald-600", photo: "by-weight", overlay: "from-emerald-950/90 via-emerald-900/40" },
+  { key: "shoesSpa", label: "Shoes Spa", Icon: Footprints, bg: "bg-teal-600", photo: "shoes-spa", overlay: "from-teal-950/90 via-teal-900/40" },
+  { key: "addOns", label: "Laundry Add-Ons", Icon: SprayCan, bg: "bg-fuchsia-600", photo: "add-ons", overlay: "from-fuchsia-950/90 via-fuchsia-900/40" },
 ];
 
 export default function Pricing() {
@@ -200,6 +202,8 @@ export default function Pricing() {
       rows: extras[m.key],
       Icon: m.Icon,
       bg: m.bg,
+      photo: m.photo,
+      overlay: m.overlay,
     })),
   ];
 
@@ -234,16 +238,19 @@ export default function Pricing() {
           <div className="container-x">
             <SectionHeading eyebrow="Browse by" title="Category" />
             <div className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-              {tiles.map(({ key, label, blurb, Icon, bg }) => (
+              {tiles.map(({ key, label, blurb, Icon, photo, overlay }) => (
                 <button
                   key={key}
                   onClick={() => openCategory(key)}
-                  className={`group relative flex min-h-[172px] flex-col justify-between gap-5 overflow-hidden rounded-3xl p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:min-h-[200px] sm:gap-6 sm:p-7 ${bg}`}
+                  className="group relative flex min-h-[172px] flex-col justify-end overflow-hidden rounded-3xl p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:min-h-[200px] sm:p-7"
                 >
-                  <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10 transition-transform group-hover:scale-110" />
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 sm:h-12 sm:w-12">
-                    <Icon className="h-5 w-5 text-white sm:h-6 sm:w-6" strokeWidth={1.75} />
-                  </div>
+                  <img
+                    src={img(`categories/${photo}.jpg`)}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-t ${overlay} to-transparent`} />
+                  <Icon className="relative mb-2 h-6 w-6 text-white" strokeWidth={1.75} />
                   <div className="relative">
                     <h3 className="font-serif text-lg font-semibold text-white sm:text-xl">{label}</h3>
                     <p className="mt-1 text-xs text-white/85 sm:text-sm">{blurb}</p>
